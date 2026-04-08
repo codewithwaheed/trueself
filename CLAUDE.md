@@ -55,3 +55,7 @@ cd apps/agent && pnpm tauri dev  # Agent
 - Add a new monitor: create file in `apps/agent/src-tauri/src/monitors/`, add to heartbeat in `heartbeat.rs`
 - Add a dashboard page: create in `apps/web/src/app/dashboard/`
 - Change DB schema: edit `packages/db/prisma/schema.prisma`, run `pnpm db:migrate`
+
+## Default Agent
+
+For any coding task — feature work, bug fixes, debugging, or questions about the stack — use the **`fullstack-dev`** agent (`.claude/agents/fullstack-dev.md`). It has deep expertise across all layers of the monorepo (Hono server, Next.js dashboard, Tauri agent, shared packages, Prisma DB) and follows all conventions in this file. Prefer it over direct edits for anything beyond trivial one-liners.
