@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+  sessions  InterviewSession[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(INTERVIEWER)
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  sessions  InterviewSession[]
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  INTERVIEWER
+}
+
+model InterviewSession {
+  id             String        @id @default(cuid())
+  sessionCode    String        @unique // 6-digit code
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id])
+  interviewerId  String
+  interviewer    User          @relation(fields: [interviewerId], references: [id])
+  candidateEmail String
+  candidateName  String?
+  meetingLink    String        // Zoom/Meet/Teams URL
+  scheduledAt    DateTime
+  startedAt      DateTime?
+  endedAt        DateTime?
+  status         SessionStatus @default(PENDING)
+  trustEvents    TrustEvent[]
+  trustReport    Json?         // final report JSON
+  overallScore   Int?          // 0-100
+  createdAt      DateTime      @default(now())
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model TrustEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id])
+  type      String
+  severity  String
+  message   String
+  data      Json?
+  timestamp DateTime @default(now())
+}

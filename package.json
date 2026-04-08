@@ -1,0 +1,19 @@
+{
+  "name": "trueself",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=web",
+    "dev:server": "turbo dev --filter=@trueself/server",
+    "dev:agent": "turbo dev --filter=agent",
+    "build": "turbo build",
+    "db:push": "pnpm --filter @trueself/db db:push",
+    "db:migrate": "pnpm --filter @trueself/db db:migrate",
+    "db:studio": "pnpm --filter @trueself/db db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
