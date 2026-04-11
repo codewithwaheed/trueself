@@ -1,0 +1,33 @@
+import { redirect } from "next/navigation";
+import { getAuthUser, getSession } from "@/lib/session";
+import { API_URL } from "@/lib/constants";
+import { SessionsContent } from "./sessions-content";
+import type { SessionListItem } from "@trueself/shared-types";
+
+async function fetchSessions(apiToken: string): Promise<SessionListItem[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/sessions`, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export default async function SessionsPage() {
+  const user = await getAuthUser();
+  const session = await getSession();
+  if (!user || !session) redirect("/login");
+
+  const sessions = await fetchSessions(session.apiToken);
+
+  return (
+    <SessionsContent
+      initialSessions={sessions}
+      companyName={user.companyName}
+    />
+  );
+}
