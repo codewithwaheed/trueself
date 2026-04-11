@@ -2,6 +2,79 @@
 // Types shared between Agent, Web Dashboard, and Server
 // ============================================
 
+// ---- Auth & User Types ----
+
+export type UserRole = "ADMIN" | "INTERVIEWER";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  companyId: string;
+  companyName: string;
+  emailVerified: boolean;
+  onboardingComplete: boolean;
+}
+
+export interface SessionPayload {
+  userId: string;
+  role: UserRole;
+  companyId: string;
+  exp: number;
+}
+
+// ---- Auth API Request/Response Types ----
+
+export interface SignupRequest {
+  name: string;
+  email: string;
+  password: string;
+  companyName: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  token: string;
+}
+
+export interface InviteRequest {
+  email: string;
+  name: string;
+}
+
+export interface AcceptInviteRequest {
+  token: string;
+  name: string;
+  password: string;
+}
+
+export interface InvitationInfo {
+  id: string;
+  email: string;
+  name: string;
+  companyName: string;
+  role: UserRole;
+  status: "PENDING" | "ACCEPTED" | "EXPIRED";
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface TeamMember {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+// ---- Interview Session Types ----
+
 // Session created by interviewer
 export interface InterviewSession {
   id: string;
@@ -12,6 +85,39 @@ export interface InterviewSession {
   meetingLink: string;           // their Zoom/Meet/Teams link
   scheduledAt: string;
   status: "pending" | "active" | "completed" | "cancelled";
+  createdAt: string;
+}
+
+// ---- Session API Types ----
+
+export interface CreateSessionRequest {
+  candidateName: string;
+  candidateEmail: string;
+  meetingLink: string;
+  scheduledAt: string; // ISO 8601
+  sendEmail?: boolean;
+}
+
+export interface CreateSessionResponse {
+  id: string;
+  sessionCode: string;
+  candidateName: string;
+  candidateEmail: string;
+  meetingLink: string;
+  scheduledAt: string;
+  status: "pending" | "active" | "completed" | "cancelled";
+  createdAt: string;
+}
+
+export interface SessionListItem {
+  id: string;
+  sessionCode: string;
+  candidateName: string;
+  candidateEmail: string;
+  meetingLink: string;
+  scheduledAt: string;
+  status: "pending" | "active" | "completed" | "cancelled";
+  overallScore: number | null;
   createdAt: string;
 }
 
