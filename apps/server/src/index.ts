@@ -24,10 +24,8 @@ app.route("/api/auth", authRoutes);
 
 // ---- REST API Routes ----
 
-// ---- Sessions Routes (authenticated) ----
-app.route("/api/sessions", sessionsRoutes);
-
-// Agent: look up session by code (unauthenticated — agent uses this before auth)
+// Agent: unauthenticated stubs — must be registered BEFORE the authenticated sessions router
+// so they are matched first and bypass the router's requireAuth middleware.
 app.get("/api/sessions/code/:code", async (c) => {
   const session = await prisma.interviewSession.findUnique({
     where: { sessionCode: c.req.param("code") },
@@ -36,7 +34,6 @@ app.get("/api/sessions/code/:code", async (c) => {
   return c.json(session);
 });
 
-// Agent/dashboard: get session details + events (unauthenticated for now — agent uses this)
 app.get("/api/sessions/:id", async (c) => {
   const session = await prisma.interviewSession.findUnique({
     where: { id: c.req.param("id") },
@@ -45,6 +42,9 @@ app.get("/api/sessions/:id", async (c) => {
   if (!session) return c.json({ error: "Not found" }, 404);
   return c.json(session);
 });
+
+// ---- Sessions Routes (authenticated) ----
+app.route("/api/sessions", sessionsRoutes);
 
 // ---- WebSocket for real-time agent <-> dashboard ----
 

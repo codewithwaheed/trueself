@@ -31,6 +31,8 @@ export async function createSession(
 export async function resendInvite(
   sessionId: string
 ): Promise<{ ok?: boolean; error?: string }> {
+  if (!/^[a-zA-Z0-9_-]+$/.test(sessionId)) return { error: "Invalid session ID" };
+
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 

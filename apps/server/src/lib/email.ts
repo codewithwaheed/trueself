@@ -14,16 +14,25 @@ export interface CandidateInviteParams {
   scheduledAt: Date;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function sendCandidateInvite(params: CandidateInviteParams): Promise<void> {
   const {
     to,
-    candidateName,
-    interviewerName,
-    companyName,
     sessionCode,
     meetingLink,
     scheduledAt,
   } = params;
+  const candidateName = escapeHtml(params.candidateName);
+  const interviewerName = escapeHtml(params.interviewerName);
+  const companyName = escapeHtml(params.companyName);
+  const companyNameRaw = params.companyName;
 
   const formattedDate = scheduledAt.toLocaleDateString("en-US", {
     weekday: "long",
@@ -120,7 +129,7 @@ export async function sendCandidateInvite(params: CandidateInviteParams): Promis
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: `Your interview with ${companyName} — session details`,
+    subject: `Your interview with ${companyNameRaw} — session details`,
     html,
   });
 
