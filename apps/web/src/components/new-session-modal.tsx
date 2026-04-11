@@ -45,7 +45,8 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
   const [session, setSession] = useState<CreateSessionResponse | null>(null);
   const [sendEmail, setSendEmail] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
-  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [codeCopyState, setCodeCopyState] = useState<"idle" | "copied">("idle");
+  const [textCopyState, setTextCopyState] = useState<"idle" | "copied">("idle");
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [isPending, startTransition] = useTransition();
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +57,8 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
       setStep("form");
       setSession(null);
       setFormError(null);
-      setCopyState("idle");
+      setCodeCopyState("idle");
+      setTextCopyState("idle");
       setEmailState("idle");
       setSendEmail(true);
       setTimeout(() => firstInputRef.current?.focus(), 50);
@@ -118,8 +120,8 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
     if (!session) return;
     const text = buildInviteText(session, companyName);
     navigator.clipboard.writeText(text).then(() => {
-      setCopyState("copied");
-      setTimeout(() => setCopyState("idle"), 2000);
+      setTextCopyState("copied");
+      setTimeout(() => setTextCopyState("idle"), 2000);
     });
   }
 
@@ -135,7 +137,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={step === "form" ? "Create session" : "Session created"}
+      aria-labelledby="modal-title"
     >
       {/* Backdrop */}
       <div
@@ -152,7 +154,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-bold tracking-tight">New session</h2>
+                  <h2 id="modal-title" className="text-lg font-bold tracking-tight">New session</h2>
                   <p className="text-sm text-navy-400 mt-0.5">Set up an interview monitoring session</p>
                 </div>
                 <button
@@ -265,7 +267,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold tracking-tight">Session created</h2>
+                  <h2 id="modal-title" className="text-lg font-bold tracking-tight">Session created</h2>
                   <p className="text-sm text-navy-400 mt-0.5">for {session.candidateName}</p>
                 </div>
               </div>
@@ -280,13 +282,16 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
                 </div>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(session.sessionCode);
-                    setCopyState("copied");
-                    setTimeout(() => setCopyState("idle"), 2000);
+                    navigator.clipboard.writeText(session.sessionCode).then(() => {
+                      setCodeCopyState("copied");
+                      setTimeout(() => setCodeCopyState("idle"), 2000);
+                    }).catch(() => {
+                      // clipboard write failed silently — user still sees the code
+                    });
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-navy-300 bg-navy-700 hover:bg-navy-600 transition-colors"
                 >
-                  {copyState === "copied" ? (
+                  {codeCopyState === "copied" ? (
                     <>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-trust"><path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                       Copied
@@ -308,7 +313,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
                     onClick={handleCopy}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-navy-300 bg-navy-700 hover:bg-navy-600 transition-colors"
                   >
-                    {copyState === "copied" ? "Copied ✓" : "Copy"}
+                    {textCopyState === "copied" ? "Copied ✓" : "Copy"}
                   </button>
                 </div>
                 <p className="text-xs text-navy-500 leading-relaxed" style={{ fontFamily: "var(--font-mono)", whiteSpace: "pre-wrap" }}>
