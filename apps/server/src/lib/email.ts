@@ -37,6 +37,12 @@ export async function sendCandidateInvite(params: CandidateInviteParams): Promis
     timeZoneName: "short",
   });
 
+  // Guard: only allow http(s) meeting links in email HTML
+  const safeMeetingLink =
+    meetingLink.startsWith("https://") || meetingLink.startsWith("http://")
+      ? meetingLink
+      : "#";
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -71,7 +77,7 @@ export async function sendCandidateInvite(params: CandidateInviteParams): Promis
             </table>
             <!-- Meeting link -->
             <p style="margin:0 0 12px;font-size:14px;color:#8494b8;">Join your interview:</p>
-            <a href="${meetingLink}" style="display:inline-block;background:#10b981;color:#0a0e1a;font-weight:600;font-size:15px;padding:12px 24px;border-radius:10px;text-decoration:none;margin-bottom:32px;">Join Meeting</a>
+            <a href="${safeMeetingLink}" style="display:inline-block;background:#10b981;color:#0a0e1a;font-weight:600;font-size:15px;padding:12px 24px;border-radius:10px;text-decoration:none;margin-bottom:32px;">Join Meeting</a>
             <!-- Session code -->
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#161d35;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid rgba(16,185,129,0.2);">
               <tr>
