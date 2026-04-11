@@ -5,35 +5,29 @@ import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
 import type { AgentHeartbeat, WSMessageFromAgent, TrustEvent } from "@trueself/shared-types";
 import { prisma } from "@trueself/db";
+import authRoutes from "./routes/auth";
+import sessionsRoutes from "./routes/sessions";
 
 const app = new Hono();
 
-app.use("*", cors());
+app.use("*", cors({
+  origin: process.env.WEB_URL || "http://localhost:3000",
+  credentials: true,
+}));
 
 // Health check
 app.get("/health", (c) => c.json({ status: "ok" }));
 
+// ---- Auth Routes ----
+app.route("/api/auth", authRoutes);
+// Team route is also on the auth router at /api/auth/team
+
 // ---- REST API Routes ----
 
-// Create interview session
-app.post("/api/sessions", async (c) => {
-  const body = await c.req.json();
-  // TODO: auth middleware, validate with zod
-  const session = await prisma.interviewSession.create({
-    data: {
-      sessionCode: Math.random().toString().slice(2, 8), // 6 digits
-      companyId: body.companyId,
-      interviewerId: body.interviewerId,
-      candidateEmail: body.candidateEmail,
-      candidateName: body.candidateName,
-      meetingLink: body.meetingLink,
-      scheduledAt: new Date(body.scheduledAt),
-    },
-  });
-  return c.json(session);
-});
+// ---- Sessions Routes (authenticated) ----
+app.route("/api/sessions", sessionsRoutes);
 
-// Get session by code (agent uses this)
+// Agent: look up session by code (unauthenticated — agent uses this before auth)
 app.get("/api/sessions/code/:code", async (c) => {
   const session = await prisma.interviewSession.findUnique({
     where: { sessionCode: c.req.param("code") },
@@ -42,7 +36,7 @@ app.get("/api/sessions/code/:code", async (c) => {
   return c.json(session);
 });
 
-// Get session details + events (dashboard uses this)
+// Agent/dashboard: get session details + events (unauthenticated for now — agent uses this)
 app.get("/api/sessions/:id", async (c) => {
   const session = await prisma.interviewSession.findUnique({
     where: { id: c.req.param("id") },
@@ -126,17 +120,31 @@ wss.on("connection", (ws, req) => {
 
 // Mount Hono on the HTTP server
 server.on("request", (req, res) => {
-  // Let Hono handle HTTP, WebSocketServer handles upgrades
-  app.fetch(
-    new Request(`http://${req.headers.host}${req.url}`, {
-      method: req.method,
-      headers: Object.fromEntries(
-        Object.entries(req.headers).filter(([, v]) => v !== undefined) as [string, string][]
-      ),
-    })
-  ).then((response) => {
-    res.writeHead(response.status, Object.fromEntries(response.headers));
-    response.text().then((body) => res.end(body));
+  // Collect body for POST/PATCH/PUT requests
+  const chunks: Buffer[] = [];
+  req.on("data", (chunk: Buffer) => chunks.push(chunk));
+  req.on("end", () => {
+    const body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+    const hasBody = req.method !== "GET" && req.method !== "HEAD" && body && body.length > 0;
+
+    const fetchResponse = app.fetch(
+      new Request(`http://${req.headers.host}${req.url}`, {
+        method: req.method,
+        headers: Object.fromEntries(
+          Object.entries(req.headers).filter(([, v]) => v !== undefined) as [string, string][]
+        ),
+        ...(hasBody ? { body } : {}),
+      })
+    );
+
+    Promise.resolve(fetchResponse).then((response: Response) => {
+      res.writeHead(response.status, Object.fromEntries(response.headers));
+      response.arrayBuffer().then((buf: ArrayBuffer) => res.end(Buffer.from(buf)));
+    }).catch((err: unknown) => {
+      console.error("Request handling error:", err);
+      res.writeHead(500);
+      res.end("Internal Server Error");
+    });
   });
 });
 
