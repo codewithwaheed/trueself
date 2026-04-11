@@ -21,7 +21,7 @@ const CreateSessionSchema = z.object({
   candidateName: z.string().min(1, "Candidate name is required"),
   candidateEmail: z.string().email("Invalid email address"),
   meetingLink: z.string().url("Invalid meeting URL"),
-  scheduledAt: z.string().min(1, "Scheduled time is required"),
+  scheduledAt: z.string().datetime({ message: "scheduledAt must be a valid ISO 8601 date" }),
   sendEmail: z.boolean().optional().default(false),
 });
 
@@ -97,17 +97,18 @@ sessions.post("/", async (c) => {
         where: { id: interviewerId },
         include: { company: true },
       });
-      if (interviewer) {
-        await sendCandidateInvite({
-          to: candidateEmail,
-          candidateName,
-          interviewerName: interviewer.name,
-          companyName: interviewer.company.name,
-          sessionCode,
-          meetingLink,
-          scheduledAt: new Date(scheduledAt),
-        });
+      if (!interviewer) {
+        return c.json({ ...toSessionResponse(session), emailError: true }, 201);
       }
+      await sendCandidateInvite({
+        to: candidateEmail,
+        candidateName,
+        interviewerName: interviewer.name,
+        companyName: interviewer.company.name,
+        sessionCode,
+        meetingLink,
+        scheduledAt: new Date(scheduledAt),
+      });
     } catch (err) {
       console.error("[sessions] Email send failed:", err);
       // Non-fatal: session is created, email error surfaces in response
