@@ -48,10 +48,12 @@ function StatusBadge({ status }: { status: SessionListItem["status"] }) {
 function SessionRow({
   session,
   onResend,
+  resending,
   onClick,
 }: {
   session: SessionListItem;
   onResend: (id: string) => void;
+  resending?: boolean;
   onClick: (session: SessionListItem) => void;
 }) {
   const [codeCopied, setCodeCopied] = useState(false);
@@ -114,7 +116,8 @@ function SessionRow({
         {session.status === "pending" && (
           <button
             onClick={(e) => { e.stopPropagation(); onResend(session.id); }}
-            className="text-xs text-navy-400 hover:text-navy-200 transition-colors whitespace-nowrap"
+            disabled={resending}
+            className="text-xs text-navy-400 hover:text-navy-200 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Resend invite
           </button>
@@ -182,8 +185,12 @@ export function SessionsContent({
     setDrawerSession(session);
     // Lazy-load team members on first drawer open
     if (teamMembers.length === 0) {
-      const members = await getTeamMembers();
-      setTeamMembers(members);
+      try {
+        const members = await getTeamMembers();
+        setTeamMembers(members);
+      } catch {
+        // drawer opens without team member search; user can still view session details
+      }
     }
   }
 
@@ -295,7 +302,8 @@ export function SessionsContent({
                 <SessionRow
                   key={session.id}
                   session={session}
-                  onResend={resendingId === session.id ? () => {} : handleResend}
+                  onResend={handleResend}
+                  resending={resendingId === session.id}
                   onClick={handleOpenDrawer}
                 />
               ))}
