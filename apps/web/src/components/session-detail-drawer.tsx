@@ -160,10 +160,8 @@ export function SessionDetailDrawer({
 
   if (!session) return null;
 
-  const isPending_ = session.status === "pending";
-  const isOwner = session.invitees.some(
-    (i) => i.id === currentUserId
-  );
+  const isStatusPending = session.status === "pending";
+  const isOwner = session.interviewerId === currentUserId;
 
   const date = new Date(session.scheduledAt);
   const formattedDate = date.toLocaleDateString("en-US", {
@@ -320,7 +318,7 @@ export function SessionDetailDrawer({
               </section>
 
               {/* Actions for pending + owner */}
-              {isPending_ && isOwner && (
+              {isStatusPending && isOwner && (
                 <section className="space-y-3">
                   <h3 className="text-xs font-semibold text-navy-500 uppercase tracking-widest">Actions</h3>
 

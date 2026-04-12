@@ -188,6 +188,7 @@ sessions.get("/", async (c) => {
     status: s.status.toLowerCase() as SessionListItem["status"],
     overallScore: s.overallScore,
     createdAt: s.createdAt.toISOString(),
+    interviewerId: s.interviewerId,
     invitees: s.sessionInvitees.map((si) => ({
       id: si.user.id,
       name: si.user.name,
@@ -342,6 +343,7 @@ sessions.get("/:id", async (c) => {
     status: session.status.toLowerCase() as SessionDetail["status"],
     overallScore: session.overallScore,
     createdAt: session.createdAt.toISOString(),
+    interviewerId: session.interviewerId,
     invitees: session.sessionInvitees.map((si) => ({
       id: si.user.id,
       name: si.user.name,

@@ -134,6 +134,7 @@ export interface SessionListItem {
   overallScore: number | null;
   createdAt: string;
   invitees: SessionInvitee[];
+  interviewerId: string;
 }
 
 export interface SessionDetail extends SessionListItem {
