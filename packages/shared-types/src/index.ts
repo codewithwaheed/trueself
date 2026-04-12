@@ -120,7 +120,7 @@ export interface CreateSessionResponse {
   scheduledAt: string;
   status: "pending" | "active" | "completed" | "cancelled";
   createdAt: string;
-  invitees: SessionInvitee[];
+  invitees?: SessionInvitee[];
 }
 
 export interface SessionListItem {
@@ -133,7 +133,7 @@ export interface SessionListItem {
   status: "pending" | "active" | "completed" | "cancelled";
   overallScore: number | null;
   createdAt: string;
-  invitees: SessionInvitee[];
+  invitees?: SessionInvitee[];
 }
 
 export interface SessionDetail extends SessionListItem {
