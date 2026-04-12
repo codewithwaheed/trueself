@@ -108,4 +108,5 @@ model SessionInvitee {
   createdAt DateTime         @default(now())
 
   @@unique([sessionId, userId])
+  @@index([userId])
 }
