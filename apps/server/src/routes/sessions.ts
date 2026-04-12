@@ -95,11 +95,15 @@ sessions.post("/", async (c) => {
   // Always include the creator; deduplicate
   const creatorUser = await prisma.user.findUnique({
     where: { id: interviewerId },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, company: { select: { name: true } } },
   });
 
+  if (!creatorUser) {
+    return c.json({ error: "Authenticated user not found" }, 500);
+  }
+
   const inviteeMap = new Map<string, { id: string; name: string; email: string }>();
-  if (creatorUser) inviteeMap.set(creatorUser.id, creatorUser);
+  inviteeMap.set(creatorUser.id, { id: creatorUser.id, name: creatorUser.name, email: creatorUser.email });
   for (const u of validInvitees) inviteeMap.set(u.id, u);
   const allInvitees = [...inviteeMap.values()];
 
@@ -120,17 +124,11 @@ sessions.post("/", async (c) => {
 
   if (sendEmail) {
     try {
-      const interviewer = creatorUser
-        ? await prisma.user.findUnique({ where: { id: interviewerId }, include: { company: true } })
-        : null;
-      if (!interviewer) {
-        return c.json({ ...toSessionResponse(session, allInvitees), emailError: true }, 201);
-      }
       await sendCandidateInvite({
         to: candidateEmail,
         candidateName,
-        interviewerName: interviewer.name,
-        companyName: interviewer.company.name,
+        interviewerName: creatorUser.name,
+        companyName: creatorUser.company.name,
         sessionCode,
         meetingLink,
         scheduledAt: new Date(scheduledAt),
