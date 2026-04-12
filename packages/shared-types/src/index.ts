@@ -88,6 +88,18 @@ export interface InterviewSession {
   createdAt: string;
 }
 
+export interface SessionInvitee {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface UpdateSessionRequest {
+  scheduledAt?: string;  // ISO 8601
+  meetingLink?: string;
+  inviteeIds?: string[]; // full replacement list; server always re-adds creator
+}
+
 // ---- Session API Types ----
 
 export interface CreateSessionRequest {
@@ -96,6 +108,7 @@ export interface CreateSessionRequest {
   meetingLink: string;
   scheduledAt: string; // ISO 8601
   sendEmail?: boolean;
+  inviteeIds?: string[];
 }
 
 export interface CreateSessionResponse {
@@ -107,6 +120,7 @@ export interface CreateSessionResponse {
   scheduledAt: string;
   status: "pending" | "active" | "completed" | "cancelled";
   createdAt: string;
+  invitees: SessionInvitee[];
 }
 
 export interface SessionListItem {
@@ -119,6 +133,12 @@ export interface SessionListItem {
   status: "pending" | "active" | "completed" | "cancelled";
   overallScore: number | null;
   createdAt: string;
+  invitees: SessionInvitee[];
+  interviewerId: string;
+}
+
+export interface SessionDetail extends SessionListItem {
+  // SessionListItem already includes invitees — no extra fields needed yet
 }
 
 // Real-time data the agent sends via WebSocket

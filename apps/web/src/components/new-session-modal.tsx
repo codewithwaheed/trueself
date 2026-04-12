@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from "react";
-import { createSession, resendInvite } from "@/actions/sessions";
-import type { CreateSessionResponse } from "@trueself/shared-types";
+import { createSession, resendInvite, getTeamMembers } from "@/actions/sessions";
+import type { CreateSessionResponse, TeamMember } from "@trueself/shared-types";
+import { InviteeMultiSelect, type SelectedInvitee } from "@/components/invitee-multi-select";
 
 interface NewSessionModalProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
   companyName: string;
+  currentUserId: string;
+  currentUserName: string;
 }
 
 function buildInviteText(
@@ -40,7 +43,7 @@ When prompted, enter your session code: ${session.sessionCode}
 The agent runs only during your scheduled interview session. It does not access personal files or data outside the session.`;
 }
 
-export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSessionModalProps) {
+export function NewSessionModal({ open, onClose, onCreated, companyName, currentUserId, currentUserName }: NewSessionModalProps) {
   const [step, setStep] = useState<"form" | "success">("form");
   const [session, setSession] = useState<CreateSessionResponse | null>(null);
   const [sendEmail, setSendEmail] = useState(true);
@@ -50,6 +53,8 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [isPending, startTransition] = useTransition();
   const firstInputRef = useRef<HTMLInputElement>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [selectedInvitees, setSelectedInvitees] = useState<SelectedInvitee[]>([]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -61,6 +66,8 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
       setTextCopyState("idle");
       setEmailState("idle");
       setSendEmail(true);
+      setSelectedInvitees([{ id: currentUserId, name: currentUserName, email: "" }]);
+      getTeamMembers().then(setTeamMembers);
       setTimeout(() => firstInputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -91,6 +98,9 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
       meetingLink: (form.elements.namedItem("meetingLink") as HTMLInputElement).value.trim(),
       scheduledAt: new Date(rawScheduled).toISOString(),
       sendEmail,
+      inviteeIds: selectedInvitees
+        .filter((i) => i.id !== currentUserId)
+        .map((i) => i.id),
     };
 
     startTransition(async () => {
@@ -211,6 +221,16 @@ export function NewSessionModal({ open, onClose, onCreated, companyName }: NewSe
                     required
                     placeholder="https://zoom.us/j/..."
                     className="input-field focus-ring"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-navy-200">Interviewers</label>
+                  <InviteeMultiSelect
+                    teamMembers={teamMembers}
+                    selected={selectedInvitees}
+                    currentUserId={currentUserId}
+                    onChange={setSelectedInvitees}
                   />
                 </div>
 

@@ -1,14 +1,19 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { NewSessionModal } from "@/components/new-session-modal";
-import { resendInvite } from "@/actions/sessions";
-import type { SessionListItem } from "@trueself/shared-types";
+import { SessionDetailDrawer } from "@/components/session-detail-drawer";
+import { resendInvite, getTeamMembers } from "@/actions/sessions";
+import type { SessionListItem, TeamMember } from "@trueself/shared-types";
+
+const PAGE_SIZE = 10;
 
 interface SessionsContentProps {
   initialSessions: SessionListItem[];
   companyName: string;
+  currentUserId: string;
+  currentUserName: string;
 }
 
 type TabKey = "upcoming" | "active" | "completed";
@@ -43,13 +48,18 @@ function StatusBadge({ status }: { status: SessionListItem["status"] }) {
 function SessionRow({
   session,
   onResend,
+  resending,
+  onClick,
 }: {
   session: SessionListItem;
   onResend: (id: string) => void;
+  resending?: boolean;
+  onClick: (session: SessionListItem) => void;
 }) {
   const [codeCopied, setCodeCopied] = useState(false);
 
-  function copyCode() {
+  function copyCode(e: React.MouseEvent) {
+    e.stopPropagation();
     navigator.clipboard.writeText(session.sessionCode).then(() => {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2000);
@@ -68,9 +78,11 @@ function SessionRow({
   });
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl bg-navy-800/30 border border-[var(--border-subtle)] hover:border-[var(--border-default)] transition-colors">
+    <div
+      onClick={() => onClick(session)}
+      className="flex items-center justify-between p-4 rounded-xl bg-navy-800/30 border border-[var(--border-subtle)] hover:border-[var(--border-default)] transition-colors cursor-pointer"
+    >
       <div className="flex items-center gap-4 min-w-0">
-        {/* Candidate info */}
         <div className="min-w-0">
           <p className="text-sm font-medium text-navy-100 truncate">{session.candidateName}</p>
           <p className="text-xs text-navy-500 truncate">{session.candidateEmail}</p>
@@ -78,13 +90,11 @@ function SessionRow({
       </div>
 
       <div className="flex items-center gap-6 shrink-0 ml-4">
-        {/* Scheduled date */}
         <div className="text-right hidden sm:block">
           <p className="text-xs text-navy-300">{formattedDate}</p>
           <p className="text-xs text-navy-500">{formattedTime}</p>
         </div>
 
-        {/* Session code */}
         <button
           onClick={copyCode}
           title="Copy session code"
@@ -101,35 +111,59 @@ function SessionRow({
           </svg>
         </button>
 
-        {/* Status */}
         <StatusBadge status={session.status} />
 
-        {/* Actions */}
         {session.status === "pending" && (
           <button
-            onClick={() => onResend(session.id)}
-            className="text-xs text-navy-400 hover:text-navy-200 transition-colors whitespace-nowrap"
+            onClick={(e) => { e.stopPropagation(); onResend(session.id); }}
+            disabled={resending}
+            className="text-xs text-navy-400 hover:text-navy-200 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Resend invite
           </button>
         )}
+
+        {/* Right arrow affordance */}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-navy-600 shrink-0">
+          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
     </div>
   );
 }
 
-export function SessionsContent({ initialSessions, companyName }: SessionsContentProps) {
+export function SessionsContent({
+  initialSessions,
+  companyName,
+  currentUserId,
+  currentUserName,
+}: SessionsContentProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("upcoming");
+  const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
+  const [drawerSession, setDrawerSession] = useState<SessionListItem | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [resendToast, setResendToast] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const tabs: TabKey[] = ["upcoming", "active", "completed"];
 
-  const filtered = initialSessions.filter(
-    (s) => STATUS_TAB[s.status] === activeTab
+  const filtered = useMemo(
+    () => initialSessions.filter((s) => STATUS_TAB[s.status] === activeTab),
+    [initialSessions, activeTab]
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  );
+
+  function handleTabChange(tab: TabKey) {
+    setActiveTab(tab);
+    setPage(1);
+  }
 
   async function handleResend(sessionId: string) {
     setResendingId(sessionId);
@@ -143,6 +177,23 @@ export function SessionsContent({ initialSessions, companyName }: SessionsConten
     router.refresh();
   }
 
+  function handleChanged() {
+    router.refresh();
+  }
+
+  async function handleOpenDrawer(session: SessionListItem) {
+    setDrawerSession(session);
+    // Lazy-load team members on first drawer open
+    if (teamMembers.length === 0) {
+      try {
+        const members = await getTeamMembers();
+        setTeamMembers(members);
+      } catch {
+        // drawer opens without team member search; user can still view session details
+      }
+    }
+  }
+
   return (
     <>
       <NewSessionModal
@@ -150,6 +201,17 @@ export function SessionsContent({ initialSessions, companyName }: SessionsConten
         onClose={() => setModalOpen(false)}
         onCreated={handleCreated}
         companyName={companyName}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
+
+      <SessionDetailDrawer
+        session={drawerSession}
+        onClose={() => setDrawerSession(null)}
+        onChanged={handleChanged}
+        companyName={companyName}
+        currentUserId={currentUserId}
+        teamMembers={teamMembers}
       />
 
       {/* Toast */}
@@ -184,7 +246,7 @@ export function SessionsContent({ initialSessions, companyName }: SessionsConten
             return (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab
                     ? "bg-navy-700 text-navy-100 shadow-sm"
@@ -234,15 +296,44 @@ export function SessionsContent({ initialSessions, companyName }: SessionsConten
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((session) => (
-              <SessionRow
-                key={session.id}
-                session={session}
-                onResend={resendingId === session.id ? () => {} : handleResend}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-2">
+              {paginated.map((session) => (
+                <SessionRow
+                  key={session.id}
+                  session={session}
+                  onResend={handleResend}
+                  resending={resendingId === session.id}
+                  onClick={handleOpenDrawer}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 px-1">
+                <p className="text-xs text-navy-500">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-navy-300 bg-navy-800 border border-[var(--border-subtle)] hover:border-[var(--border-default)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-navy-300 bg-navy-800 border border-[var(--border-subtle)] hover:border-[var(--border-default)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
