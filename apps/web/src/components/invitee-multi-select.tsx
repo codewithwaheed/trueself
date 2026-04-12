@@ -92,6 +92,7 @@ export function InviteeMultiSelect({
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder="Search team members…"
+          aria-label="Search team members"
           className="input-field focus-ring text-sm"
           autoComplete="off"
         />
