@@ -28,6 +28,8 @@ export default async function SessionsPage() {
     <SessionsContent
       initialSessions={sessions}
       companyName={session.companyName}
+      currentUserId={session.userId}
+      currentUserName={session.userName}
     />
   );
 }
