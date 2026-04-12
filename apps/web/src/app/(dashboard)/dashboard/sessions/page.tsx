@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAuthUser, getSession } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import { API_URL } from "@/lib/constants";
 import { SessionsContent } from "./sessions-content";
 import type { SessionListItem } from "@trueself/shared-types";
@@ -10,6 +10,7 @@ async function fetchSessions(apiToken: string): Promise<SessionListItem[]> {
       headers: { Authorization: `Bearer ${apiToken}` },
       cache: "no-store",
     });
+    if (res.status === 401) redirect("/login");
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -18,16 +19,15 @@ async function fetchSessions(apiToken: string): Promise<SessionListItem[]> {
 }
 
 export default async function SessionsPage() {
-  const user = await getAuthUser();
   const session = await getSession();
-  if (!user || !session) redirect("/login");
+  if (!session) redirect("/login");
 
   const sessions = await fetchSessions(session.apiToken);
 
   return (
     <SessionsContent
       initialSessions={sessions}
-      companyName={user.companyName}
+      companyName={session.companyName}
     />
   );
 }

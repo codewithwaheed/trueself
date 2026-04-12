@@ -1,0 +1,1 @@
+- [Next.js 16 directives](feedback_nextjs16_directives.md) -- Turbopack requires single-quote directives, no inline 'use server' in client files

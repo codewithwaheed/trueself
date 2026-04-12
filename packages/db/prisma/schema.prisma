@@ -7,28 +7,56 @@ datasource db {
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  users     User[]
-  sessions  InterviewSession[]
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  createdAt   DateTime           @default(now())
+  users       User[]
+  sessions    InterviewSession[]
+  invitations Invitation[]
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  role      Role     @default(INTERVIEWER)
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id])
-  sessions  InterviewSession[]
-  createdAt DateTime @default(now())
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  name               String
+  passwordHash       String?
+  role               Role               @default(INTERVIEWER)
+  companyId          String
+  company            Company            @relation(fields: [companyId], references: [id])
+  sessions           InterviewSession[]
+  emailVerified      Boolean            @default(false)
+  onboardingComplete Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 }
 
 enum Role {
   ADMIN
   INTERVIEWER
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  email     String
+  name      String           @default("")
+  token     String           @unique
+  companyId String
+  company   Company          @relation(fields: [companyId], references: [id])
+  role      Role             @default(INTERVIEWER)
+  invitedBy String
+  status    InvitationStatus @default(PENDING)
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
 }
 
 model InterviewSession {
@@ -59,12 +87,12 @@ enum SessionStatus {
 }
 
 model TrustEvent {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   sessionId String
   session   InterviewSession @relation(fields: [sessionId], references: [id])
   type      String
   severity  String
   message   String
   data      Json?
-  timestamp DateTime @default(now())
+  timestamp DateTime         @default(now())
 }
