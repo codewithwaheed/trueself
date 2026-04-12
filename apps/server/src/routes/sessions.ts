@@ -23,6 +23,7 @@ const CreateSessionSchema = z.object({
   meetingLink: z.string().url("Invalid meeting URL"),
   scheduledAt: z.string().datetime({ message: "scheduledAt must be a valid ISO 8601 date" }),
   sendEmail: z.boolean().optional().default(false),
+  inviteeIds: z.array(z.string()).optional().default([]),
 });
 
 // ---- Helpers ----
@@ -38,16 +39,19 @@ async function generateUniqueCode(): Promise<string> {
   throw new Error("Failed to generate unique session code");
 }
 
-function toSessionResponse(session: {
-  id: string;
-  sessionCode: string;
-  candidateName: string | null;
-  candidateEmail: string;
-  meetingLink: string;
-  scheduledAt: Date;
-  status: string;
-  createdAt: Date;
-}): CreateSessionResponse {
+function toSessionResponse(
+  session: {
+    id: string;
+    sessionCode: string;
+    candidateName: string | null;
+    candidateEmail: string;
+    meetingLink: string;
+    scheduledAt: Date;
+    status: string;
+    createdAt: Date;
+  },
+  invitees: { id: string; name: string; email: string }[] = []
+): CreateSessionResponse {
   return {
     id: session.id,
     sessionCode: session.sessionCode,
@@ -57,6 +61,7 @@ function toSessionResponse(session: {
     scheduledAt: session.scheduledAt.toISOString(),
     status: session.status.toLowerCase() as CreateSessionResponse["status"],
     createdAt: session.createdAt.toISOString(),
+    invitees,
   };
 }
 
@@ -73,11 +78,30 @@ sessions.post("/", async (c) => {
     return c.json({ error: firstError, fieldErrors: errors }, 400);
   }
 
-  const { candidateName, candidateEmail, meetingLink, scheduledAt, sendEmail } = parsed.data;
+  const { candidateName, candidateEmail, meetingLink, scheduledAt, sendEmail, inviteeIds } = parsed.data;
   const interviewerId = c.get("userId");
   const companyId = c.get("companyId");
 
   const sessionCode = await generateUniqueCode();
+
+  // Validate inviteeIds belong to the same company
+  const validInvitees = inviteeIds.length > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: inviteeIds }, companyId },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+
+  // Always include the creator; deduplicate
+  const creatorUser = await prisma.user.findUnique({
+    where: { id: interviewerId },
+    select: { id: true, name: true, email: true },
+  });
+
+  const inviteeMap = new Map<string, { id: string; name: string; email: string }>();
+  if (creatorUser) inviteeMap.set(creatorUser.id, creatorUser);
+  for (const u of validInvitees) inviteeMap.set(u.id, u);
+  const allInvitees = [...inviteeMap.values()];
 
   const session = await prisma.interviewSession.create({
     data: {
@@ -88,17 +112,19 @@ sessions.post("/", async (c) => {
       candidateEmail,
       meetingLink,
       scheduledAt: new Date(scheduledAt),
+      sessionInvitees: {
+        create: allInvitees.map((u) => ({ userId: u.id })),
+      },
     },
   });
 
   if (sendEmail) {
     try {
-      const interviewer = await prisma.user.findUnique({
-        where: { id: interviewerId },
-        include: { company: true },
-      });
+      const interviewer = creatorUser
+        ? await prisma.user.findUnique({ where: { id: interviewerId }, include: { company: true } })
+        : null;
       if (!interviewer) {
-        return c.json({ ...toSessionResponse(session), emailError: true }, 201);
+        return c.json({ ...toSessionResponse(session, allInvitees), emailError: true }, 201);
       }
       await sendCandidateInvite({
         to: candidateEmail,
@@ -111,12 +137,11 @@ sessions.post("/", async (c) => {
       });
     } catch (err) {
       console.error("[sessions] Email send failed:", err);
-      // Non-fatal: session is created, email error surfaces in response
-      return c.json({ ...toSessionResponse(session), emailError: true }, 201);
+      return c.json({ ...toSessionResponse(session, allInvitees), emailError: true }, 201);
     }
   }
 
-  return c.json(toSessionResponse(session), 201);
+  return c.json(toSessionResponse(session, allInvitees), 201);
 });
 
 // GET /api/sessions — list sessions for caller
@@ -128,11 +153,22 @@ sessions.get("/", async (c) => {
   const where =
     userRole === "ADMIN"
       ? { companyId }
-      : { interviewerId: userId, companyId };
+      : {
+          companyId,
+          OR: [
+            { interviewerId: userId },
+            { sessionInvitees: { some: { userId } } },
+          ],
+        };
 
   const rows = await prisma.interviewSession.findMany({
     where,
     orderBy: { scheduledAt: "desc" },
+    include: {
+      sessionInvitees: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+      },
+    },
   });
 
   const result: SessionListItem[] = rows.map((s) => ({
@@ -145,6 +181,11 @@ sessions.get("/", async (c) => {
     status: s.status.toLowerCase() as SessionListItem["status"],
     overallScore: s.overallScore,
     createdAt: s.createdAt.toISOString(),
+    invitees: s.sessionInvitees.map((si) => ({
+      id: si.user.id,
+      name: si.user.name,
+      email: si.user.email,
+    })),
   }));
 
   return c.json(result);
