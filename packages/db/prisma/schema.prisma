@@ -25,6 +25,7 @@ model User {
   companyId          String
   company            Company            @relation(fields: [companyId], references: [id])
   sessions           InterviewSession[]
+  sessionInvitees    SessionInvitee[]
   emailVerified      Boolean            @default(false)
   onboardingComplete Boolean            @default(false)
   createdAt          DateTime           @default(now())
@@ -73,7 +74,8 @@ model InterviewSession {
   startedAt      DateTime?
   endedAt        DateTime?
   status         SessionStatus @default(PENDING)
-  trustEvents    TrustEvent[]
+  trustEvents     TrustEvent[]
+  sessionInvitees SessionInvitee[]
   trustReport    Json?         // final report JSON
   overallScore   Int?          // 0-100
   createdAt      DateTime      @default(now())
@@ -95,4 +97,15 @@ model TrustEvent {
   message   String
   data      Json?
   timestamp DateTime         @default(now())
+}
+
+model SessionInvitee {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id])
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  createdAt DateTime         @default(now())
+
+  @@unique([sessionId, userId])
 }
