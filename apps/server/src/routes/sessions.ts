@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { prisma } from "@trueself/db";
-import type { SessionListItem, CreateSessionResponse } from "@trueself/shared-types";
+import type { SessionListItem, CreateSessionResponse, SessionDetail } from "@trueself/shared-types";
 import { requireAuth } from "../middleware/auth";
 import { sendCandidateInvite } from "../lib/email";
 
@@ -64,6 +64,12 @@ function toSessionResponse(
     invitees,
   };
 }
+
+const UpdateSessionSchema = z.object({
+  scheduledAt: z.string().datetime().optional(),
+  meetingLink: z.string().url("Invalid meeting URL").optional(),
+  inviteeIds: z.array(z.string().min(1)).max(20).optional(),
+});
 
 // ---- Routes ----
 
@@ -185,6 +191,158 @@ sessions.get("/", async (c) => {
       email: si.user.email,
     })),
   }));
+
+  return c.json(result);
+});
+
+// PATCH /api/sessions/:id/cancel — cancel a pending session
+sessions.patch("/:id/cancel", async (c) => {
+  const sessionId = c.req.param("id");
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const companyId = c.get("companyId");
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session || session.companyId !== companyId) {
+    return c.json({ error: "Session not found" }, 404);
+  }
+
+  if (session.interviewerId !== userId && userRole !== "ADMIN") {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  if (session.status !== "PENDING") {
+    return c.json({ error: "Only pending sessions can be cancelled" }, 409);
+  }
+
+  await prisma.interviewSession.update({
+    where: { id: sessionId },
+    data: { status: "CANCELLED" },
+  });
+
+  return c.json({ ok: true });
+});
+
+// PATCH /api/sessions/:id — edit a pending session
+sessions.patch("/:id", async (c) => {
+  const sessionId = c.req.param("id");
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const companyId = c.get("companyId");
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session || session.companyId !== companyId) {
+    return c.json({ error: "Session not found" }, 404);
+  }
+
+  if (session.interviewerId !== userId && userRole !== "ADMIN") {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  if (session.status !== "PENDING") {
+    return c.json({ error: "Only pending sessions can be edited" }, 409);
+  }
+
+  const body = await c.req.json();
+  const parsed = UpdateSessionSchema.safeParse(body);
+  if (!parsed.success) {
+    const errors = parsed.error.flatten().fieldErrors;
+    const firstError = Object.values(errors)[0]?.[0] ?? "Invalid input";
+    return c.json({ error: firstError, fieldErrors: errors }, 400);
+  }
+
+  const { scheduledAt, meetingLink, inviteeIds } = parsed.data;
+
+  const updateData: Record<string, unknown> = {};
+  if (scheduledAt) updateData.scheduledAt = new Date(scheduledAt);
+  if (meetingLink) updateData.meetingLink = meetingLink;
+
+  if (inviteeIds !== undefined) {
+    // Validate new invitees belong to same company
+    const validInvitees = inviteeIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: inviteeIds }, companyId },
+          select: { id: true },
+        })
+      : [];
+
+    // Always keep the creator
+    const ownerIncluded = validInvitees.some((u) => u.id === session.interviewerId);
+    const finalIds = ownerIncluded
+      ? validInvitees.map((u) => u.id)
+      : [session.interviewerId, ...validInvitees.map((u) => u.id)];
+
+    // Replace invitees: delete all then re-create
+    await prisma.sessionInvitee.deleteMany({ where: { sessionId } });
+    await prisma.sessionInvitee.createMany({
+      data: finalIds.map((uid) => ({ sessionId, userId: uid })),
+    });
+  }
+
+  const updated = await prisma.interviewSession.update({
+    where: { id: sessionId },
+    data: updateData,
+    include: {
+      sessionInvitees: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+      },
+    },
+  });
+
+  return c.json(toSessionResponse(
+    updated,
+    updated.sessionInvitees.map((si) => ({ id: si.user.id, name: si.user.name, email: si.user.email }))
+  ));
+});
+
+// GET /api/sessions/:id — get session detail
+sessions.get("/:id", async (c) => {
+  const sessionId = c.req.param("id");
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const companyId = c.get("companyId");
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: {
+      sessionInvitees: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+      },
+    },
+  });
+
+  if (!session || session.companyId !== companyId) {
+    return c.json({ error: "Session not found" }, 404);
+  }
+
+  const isOwner = session.interviewerId === userId;
+  const isInvitee = session.sessionInvitees.some((si) => si.userId === userId);
+  if (!isOwner && !isInvitee && userRole !== "ADMIN") {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const result: SessionDetail = {
+    id: session.id,
+    sessionCode: session.sessionCode,
+    candidateName: session.candidateName ?? "",
+    candidateEmail: session.candidateEmail,
+    meetingLink: session.meetingLink,
+    scheduledAt: session.scheduledAt.toISOString(),
+    status: session.status.toLowerCase() as SessionDetail["status"],
+    overallScore: session.overallScore,
+    createdAt: session.createdAt.toISOString(),
+    invitees: session.sessionInvitees.map((si) => ({
+      id: si.user.id,
+      name: si.user.name,
+      email: si.user.email,
+    })),
+  };
 
   return c.json(result);
 });
