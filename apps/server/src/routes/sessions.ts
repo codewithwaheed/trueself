@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { prisma } from "@trueself/db";
+import { prisma, SessionStatus } from "@trueself/db";
 import type { SessionListItem, CreateSessionResponse, SessionDetail } from "@trueself/shared-types";
 import { requireAuth } from "../middleware/auth";
 import { sendCandidateInvite } from "../lib/email";
@@ -69,7 +69,10 @@ const UpdateSessionSchema = z.object({
   scheduledAt: z.string().datetime().optional(),
   meetingLink: z.string().url("Invalid meeting URL").optional(),
   inviteeIds: z.array(z.string().min(1)).max(20).optional(),
-});
+}).refine(
+  (d) => d.scheduledAt !== undefined || d.meetingLink !== undefined || d.inviteeIds !== undefined,
+  { message: "At least one field must be provided" }
+);
 
 // ---- Routes ----
 
@@ -214,7 +217,7 @@ sessions.patch("/:id/cancel", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  if (session.status !== "PENDING") {
+  if (session.status !== SessionStatus.PENDING) {
     return c.json({ error: "Only pending sessions can be cancelled" }, 409);
   }
 
@@ -245,7 +248,7 @@ sessions.patch("/:id", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  if (session.status !== "PENDING") {
+  if (session.status !== SessionStatus.PENDING) {
     return c.json({ error: "Only pending sessions can be edited" }, 409);
   }
 
@@ -278,10 +281,12 @@ sessions.patch("/:id", async (c) => {
       ? validInvitees.map((u) => u.id)
       : [session.interviewerId, ...validInvitees.map((u) => u.id)];
 
-    // Replace invitees: delete all then re-create
-    await prisma.sessionInvitee.deleteMany({ where: { sessionId } });
-    await prisma.sessionInvitee.createMany({
-      data: finalIds.map((uid) => ({ sessionId, userId: uid })),
+    // Replace invitees atomically: delete all then re-create
+    await prisma.$transaction(async (tx) => {
+      await tx.sessionInvitee.deleteMany({ where: { sessionId } });
+      await tx.sessionInvitee.createMany({
+        data: finalIds.map((uid) => ({ sessionId, userId: uid })),
+      });
     });
   }
 
