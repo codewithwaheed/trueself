@@ -20,6 +20,12 @@ pub struct ProcessInfo {
     pub flag_reason: Option<String>,
 }
 
+#[derive(Debug, Serialize, Clone)]
+pub struct FlaggedProcess {
+    pub pid: u32,
+    pub name: String,
+}
+
 pub fn scan_processes() -> Vec<ProcessInfo> {
     let mut sys = System::new_all();
     sys.refresh_all();
