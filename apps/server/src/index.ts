@@ -29,9 +29,28 @@ app.route("/api/auth", authRoutes);
 app.get("/api/sessions/code/:code", async (c) => {
   const session = await prisma.interviewSession.findUnique({
     where: { sessionCode: c.req.param("code") },
+    include: {
+      interviewer: { select: { name: true } },
+      company: { select: { name: true } },
+    },
   });
-  if (!session) return c.json({ error: "Not found" }, 404);
-  return c.json(session);
+  if (!session) return c.json({ error: "Session not found. Please check your code and try again." }, 404);
+  if (session.status === "CANCELLED") {
+    return c.json({ error: "This session has been cancelled. Contact your interviewer." }, 410);
+  }
+  if (session.status === "COMPLETED") {
+    return c.json({ error: "This session has already ended. Contact your interviewer." }, 410);
+  }
+  return c.json({
+    id: session.id,
+    sessionCode: session.sessionCode,
+    candidateName: session.candidateName,
+    interviewerName: session.interviewer.name,
+    companyName: session.company.name,
+    scheduledAt: session.scheduledAt.toISOString(),
+    status: session.status.toLowerCase(),
+    meetingLink: session.meetingLink,
+  });
 });
 
 app.get("/api/sessions/:id", async (c) => {

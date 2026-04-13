@@ -73,6 +73,20 @@ export interface TeamMember {
   createdAt: string;
 }
 
+// ---- Agent Session Types ----
+
+// Response from GET /api/sessions/code/:code (used by candidate agent)
+export interface AgentSessionInfo {
+  id: string;
+  sessionCode: string;
+  candidateName: string | null;
+  interviewerName: string;
+  companyName: string;
+  scheduledAt: string;
+  status: "pending" | "active" | "completed" | "cancelled";
+  meetingLink: string;
+}
+
 // ---- Interview Session Types ----
 
 // Session created by interviewer

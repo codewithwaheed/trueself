@@ -2,42 +2,105 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/src/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
+    <title>TrueSelf</title>
+    <link rel="stylesheet" href="/src/styles.css" />
     <script type="module" src="/src/main.ts" defer></script>
   </head>
-
   <body>
-    <main class="container">
-      <h1>Welcome to Tauri</h1>
 
-      <div class="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/src/assets/vite.svg" class="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img
-            src="/src/assets/tauri.svg"
-            class="logo tauri"
-            alt="Tauri logo"
-          />
-        </a>
-        <a href="https://www.typescriptlang.org/docs" target="_blank">
-          <img
-            src="/src/assets/typescript.svg"
-            class="logo typescript"
-            alt="typescript logo"
-          />
-        </a>
+    <!-- Screen 1: Welcome / Code Entry -->
+    <div id="screen-welcome" class="screen active">
+      <div class="logo-mark">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#6366f1" stroke-width="2.5"/>
+          <path d="M13 20.5l5 5 9-10" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
+      <h1>TrueSelf</h1>
+      <p class="subtitle">Enter your session code to begin</p>
 
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
+      <form id="code-form">
+        <div class="code-input-wrapper">
+          <input
+            id="code-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="000000"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <p id="code-error" class="error-text hidden"></p>
+        <button type="submit" id="verify-btn">
+          <span id="verify-label">Verify Code</span>
+          <span id="verify-spinner" class="spinner hidden"></span>
+        </button>
       </form>
-      <p id="greet-msg"></p>
-    </main>
+    </div>
+
+    <!-- Screen 2: Preflight Checklist -->
+    <div id="screen-preflight" class="screen hidden">
+      <div class="session-header">
+        <div class="session-badge">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#6366f1" stroke-width="1.5"/>
+            <path d="M5 8.5l2 2 4-4" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span id="session-badge-text">Session verified</span>
+        </div>
+        <div class="session-meta">
+          <span id="session-company" class="meta-company"></span>
+          <span id="session-interviewer" class="meta-interviewer"></span>
+          <span id="session-time" class="meta-time"></span>
+        </div>
+      </div>
+
+      <div class="section-label">Preflight checks</div>
+      <ul id="checklist" class="checklist">
+        <!-- Items injected by JS -->
+      </ul>
+
+      <div id="preflight-result" class="preflight-result hidden">
+        <div id="result-pass" class="result-pass hidden">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="9" fill="#22c55e" fill-opacity="0.15" stroke="#22c55e" stroke-width="1.5"/>
+            <path d="M6 10.5l3 3 5-6" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>You're ready! Minimize this app and join your interview.</span>
+        </div>
+        <div id="result-warn" class="result-warn hidden">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L18.66 17H1.34L10 2Z" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M10 8v4M10 14.5v.5" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span>Issues found. Please resolve them before your interview.</span>
+        </div>
+      </div>
+
+      <div id="preflight-actions" class="preflight-actions hidden">
+        <button id="minimize-btn" class="btn-primary hidden">
+          Minimize to Tray
+        </button>
+        <button id="rerun-btn" class="btn-ghost">
+          Re-run Checks
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Ready / Active (shown when brought back from tray) -->
+    <div id="screen-ready" class="screen hidden">
+      <div class="ready-indicator">
+        <div id="ready-dot" class="dot dot-green"></div>
+        <span id="ready-status-text">Monitoring active</span>
+      </div>
+      <p class="ready-hint">TrueSelf is running in the background.</p>
+      <p class="ready-hint">Your interviewer can see your trust score in real time.</p>
+      <button id="back-to-tray-btn" class="btn-primary">
+        Minimize to Tray
+      </button>
+    </div>
+
   </body>
 </html>
