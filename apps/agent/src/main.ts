@@ -5,10 +5,16 @@ import type { AgentSessionInfo } from "@trueself/shared-types";
 
 // ---- State ----
 
+interface FlaggedProcess {
+  pid: number;
+  name: string;
+}
+
 interface PreflightCheck {
   name: string;
   passed: boolean;
   details: string;
+  flagged_processes?: FlaggedProcess[];
 }
 
 let currentSession: AgentSessionInfo | null = null;
@@ -153,6 +159,106 @@ function setCheckState(
   iconEl.innerHTML = iconHTML;
 }
 
+function renderProcessList(checkName: string, processes: FlaggedProcess[]) {
+  const li = document.getElementById(`check-${slugify(checkName)}`);
+  if (!li) return;
+
+  // Remove any existing process list (e.g., from a previous re-run)
+  li.querySelector(".process-list")?.remove();
+
+  // Top-align so the expanded list doesn't look odd
+  li.style.alignItems = "flex-start";
+
+  const listEl = document.createElement("div");
+  listEl.className = "process-list";
+
+  for (const proc of processes) {
+    const row = document.createElement("div");
+    row.className = "process-row";
+    row.dataset.pid = String(proc.pid);
+    row.innerHTML = `
+      <span class="process-dot"></span>
+      <span class="process-name">${escapeHtml(proc.name)}</span>
+      <span class="process-pid">pid ${proc.pid}</span>
+      <div class="process-actions">
+        <button class="btn-quit">Quit</button>
+        <button class="btn-force-quit">Force Quit</button>
+      </div>
+    `;
+
+    const quitBtn = row.querySelector<HTMLButtonElement>(".btn-quit")!;
+    const forceBtn = row.querySelector<HTMLButtonElement>(".btn-force-quit")!;
+
+    quitBtn.addEventListener("click", () => killProcess(proc.pid, false, row, quitBtn, forceBtn));
+    forceBtn.addEventListener("click", () => killProcess(proc.pid, true, row, quitBtn, forceBtn));
+
+    listEl.appendChild(row);
+  }
+
+  // Quit All & Re-run footer
+  const footer = document.createElement("div");
+  footer.className = "process-list-footer";
+  const quitAllBtn = document.createElement("button");
+  quitAllBtn.className = "btn-quit-all";
+  quitAllBtn.textContent = "Quit All & Re-run";
+  quitAllBtn.addEventListener("click", () => quitAllAndRerun(listEl, quitAllBtn));
+  footer.appendChild(quitAllBtn);
+  listEl.appendChild(footer);
+
+  // Inject into .item-text so it expands below the name/detail
+  li.querySelector(".item-text")!.appendChild(listEl);
+}
+
+async function killProcess(
+  pid: number,
+  force: boolean,
+  row: HTMLElement,
+  quitBtn: HTMLButtonElement,
+  forceBtn: HTMLButtonElement
+) {
+  // Disable buttons, show spinner on the clicked one
+  quitBtn.disabled = true;
+  forceBtn.disabled = true;
+  const activeBtn = force ? forceBtn : quitBtn;
+  const originalText = activeBtn.textContent!;
+  activeBtn.innerHTML = `<span class="spinner" style="width:12px;height:12px;border-width:1.5px;"></span>`;
+
+  // Remove any previous error
+  row.nextElementSibling?.classList.contains("process-row-error") &&
+    row.nextElementSibling.remove();
+
+  try {
+    await invoke("kill_process", { pid, force });
+    // Success — mark row as closed
+    row.classList.add("closed");
+    row.querySelector(".process-actions")!.remove();
+  } catch (_err) {
+    // Failure — keep Quit disabled, re-enable Force Quit, show error
+    activeBtn.textContent = originalText;
+    forceBtn.disabled = false;
+    const errEl = document.createElement("div");
+    errEl.className = "process-row-error";
+    errEl.textContent = "Failed to quit — try Force Quit";
+    row.after(errEl);
+  }
+}
+
+async function quitAllAndRerun(listEl: HTMLElement, btn: HTMLButtonElement) {
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner" style="width:12px;height:12px;border-width:1.5px;border-top-color:#fff;"></span> Quitting...`;
+
+  const rows = listEl.querySelectorAll<HTMLElement>(".process-row:not(.closed)");
+  for (const row of rows) {
+    const pid = Number(row.dataset.pid);
+    const quitBtn = row.querySelector<HTMLButtonElement>(".btn-quit")!;
+    const forceBtn = row.querySelector<HTMLButtonElement>(".btn-force-quit")!;
+    await killProcess(pid, false, row, quitBtn, forceBtn);
+  }
+
+  // Re-run preflight regardless of individual failures
+  await runPreflight();
+}
+
 async function runPreflight() {
   // Hide results and actions from previous run
   document.getElementById("preflight-result")!.classList.add("hidden");
@@ -183,6 +289,11 @@ async function runPreflight() {
       );
 
       if (!check.passed) allPassed = false;
+
+      // If process scan failed, render the inline close UI
+      if (check.name === "Scanning processes" && !check.passed && check.flagged_processes?.length) {
+        renderProcessList(check.name, check.flagged_processes);
+      }
     }
   } catch (err) {
     console.error("Preflight error:", err);
@@ -270,6 +381,14 @@ async function setupEvents() {
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function delay(ms: number): Promise<void> {
