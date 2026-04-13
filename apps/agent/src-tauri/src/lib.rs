@@ -212,9 +212,9 @@ fn get_ws_connected(state: State<'_, AppState>) -> bool {
 fn kill_process(pid: u32, force: bool) -> Result<(), String> {
     use sysinfo::{Pid, Signal, System};
 
-    let mut sys = System::new();
+    let mut sys = System::new_all();
+    sys.refresh_all();
     let pid_val = Pid::from_u32(pid);
-    sys.refresh_process(pid_val);
 
     let process = sys
         .process(pid_val)

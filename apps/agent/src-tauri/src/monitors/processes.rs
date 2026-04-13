@@ -20,7 +20,7 @@ pub struct ProcessInfo {
     pub flag_reason: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, serde::Deserialize, Clone)]
 pub struct FlaggedProcess {
     pub pid: u32,
     pub name: String,
