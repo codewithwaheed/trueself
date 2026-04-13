@@ -28,6 +28,7 @@ pub struct PreflightCheck {
     pub name: String,
     pub passed: bool,
     pub details: String,
+    pub flagged_processes: Option<Vec<monitors::processes::FlaggedProcess>>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -102,6 +103,7 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
         } else {
             "Cannot reach TrueSelf server — check your internet connection".to_string()
         },
+        flagged_processes: None,
     });
 
     // 2. Display check
@@ -121,11 +123,19 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
         name: "Checking displays".to_string(),
         passed: screen_ok,
         details,
+        flagged_processes: None,
     });
 
     // 3. Process scan — flag known AI tools
     let processes = monitors::processes::scan_processes();
-    let flagged: Vec<_> = processes.iter().filter(|p| p.is_flagged).collect();
+    let flagged: Vec<monitors::processes::FlaggedProcess> = processes
+        .iter()
+        .filter(|p| p.is_flagged)
+        .map(|p| monitors::processes::FlaggedProcess {
+            pid: p.pid,
+            name: p.name.clone(),
+        })
+        .collect();
     checks.push(PreflightCheck {
         name: "Scanning processes".to_string(),
         passed: flagged.is_empty(),
@@ -142,6 +152,7 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
                     .join(", ")
             )
         },
+        flagged_processes: if flagged.is_empty() { None } else { Some(flagged) },
     });
 
     // 4. Permissions — if we scanned processes, we have the access we need
@@ -149,6 +160,7 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
         name: "Verifying permissions".to_string(),
         passed: true,
         details: "All permissions granted".to_string(),
+        flagged_processes: None,
     });
 
     Ok(checks)
