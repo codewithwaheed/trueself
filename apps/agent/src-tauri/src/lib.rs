@@ -207,6 +207,32 @@ fn get_ws_connected(state: State<'_, AppState>) -> bool {
     *state.ws_connected.lock().unwrap()
 }
 
+/// Kill a process by PID. force=false sends SIGTERM (graceful), force=true sends SIGKILL.
+#[tauri::command]
+fn kill_process(pid: u32, force: bool) -> Result<(), String> {
+    use sysinfo::{Pid, Signal, System};
+
+    let mut sys = System::new();
+    let pid_val = Pid::from_u32(pid);
+    sys.refresh_process(pid_val);
+
+    let process = sys
+        .process(pid_val)
+        .ok_or_else(|| format!("Process {} not found (may have already exited)", pid))?;
+
+    let success = if force {
+        process.kill()
+    } else {
+        process.kill_with(Signal::Term).unwrap_or(false)
+    };
+
+    if success {
+        Ok(())
+    } else {
+        Err(format!("Failed to terminate process {}", pid))
+    }
+}
+
 // ---- Heartbeat Loop ----
 
 async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
@@ -379,6 +405,7 @@ pub fn run() {
             start_monitoring,
             stop_monitoring,
             get_ws_connected,
+            kill_process,
         ])
         .run(tauri::generate_context!())
         .expect("error while running TrueSelf agent");
