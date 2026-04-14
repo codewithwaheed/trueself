@@ -55,6 +55,16 @@ export interface TeamMember {
     role: UserRole;
     createdAt: string;
 }
+export interface AgentSessionInfo {
+    id: string;
+    sessionCode: string;
+    candidateName: string | null;
+    interviewerName: string;
+    companyName: string;
+    scheduledAt: string;
+    status: "pending" | "active" | "completed" | "cancelled";
+    meetingLink: string;
+}
 export interface InterviewSession {
     id: string;
     companyId: string;
@@ -66,12 +76,24 @@ export interface InterviewSession {
     status: "pending" | "active" | "completed" | "cancelled";
     createdAt: string;
 }
+export interface SessionInvitee {
+    id: string;
+    name: string;
+    email: string;
+}
+export interface UpdateSessionRequest {
+    scheduledAt?: string;
+    meetingLink?: string;
+    inviteeIds?: string[];
+}
 export interface CreateSessionRequest {
     candidateName: string;
     candidateEmail: string;
     meetingLink: string;
     scheduledAt: string;
     sendEmail?: boolean;
+    inviteeIds?: string[];
+    plannedDurationMinutes?: number;
 }
 export interface CreateSessionResponse {
     id: string;
@@ -80,8 +102,12 @@ export interface CreateSessionResponse {
     candidateEmail: string;
     meetingLink: string;
     scheduledAt: string;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    plannedDurationMinutes?: number | null;
     status: "pending" | "active" | "completed" | "cancelled";
     createdAt: string;
+    invitees: SessionInvitee[];
 }
 export interface SessionListItem {
     id: string;
@@ -90,9 +116,29 @@ export interface SessionListItem {
     candidateEmail: string;
     meetingLink: string;
     scheduledAt: string;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    plannedDurationMinutes?: number | null;
     status: "pending" | "active" | "completed" | "cancelled";
     overallScore: number | null;
     createdAt: string;
+    invitees: SessionInvitee[];
+    interviewerId: string;
+}
+export interface SessionDetail extends SessionListItem {
+}
+export interface SessionStatusUpdate {
+    type: "session_status_update";
+    sessionId: string;
+    status: "active" | "completed";
+    startedAt?: string;
+    endedAt?: string;
+}
+export interface UserEvent {
+    sessionId: string;
+    timestamp: number;
+    type: "keystroke" | "mouse_click" | "focus_change" | "tab_switch" | "copy" | "paste" | "network_request";
+    metadata?: Record<string, unknown>;
 }
 export interface AgentHeartbeat {
     sessionId: string;
@@ -102,6 +148,7 @@ export interface AgentHeartbeat {
     suspiciousWindows: WindowInfo[];
     networkFlags: NetworkFlag[];
     clipboardEvents: ClipboardEvent[];
+    userEvents: UserEvent[];
     trustScore: number;
 }
 export interface ScreenInfo {
@@ -193,6 +240,9 @@ export type WSMessageToAgent = {
 } | {
     type: "config_update";
     config: AgentConfig;
+} | {
+    type: "interviewer_disconnected";
+    sessionId: string;
 };
 export interface PreflightResult {
     passed: boolean;

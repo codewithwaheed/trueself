@@ -1,11 +1,28 @@
 
-> @trueself/shared-types@0.0.1 build /Users/m3/Work/trueself/packages/shared-types
+> @trueself/shared-types@0.0.1 build /Users/m3/Work/trueself/.claude/worktrees/focused-wiles/packages/shared-types
 > tsc
 
 ../../apps/agent/vite.config.ts(3,1): error TS2578: Unused '@ts-expect-error' directive.
+../../apps/server/src/routes/auth.ts(99,51): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+../../apps/server/src/routes/auth.ts(263,35): error TS7006: Parameter 'inv' implicitly has an 'any' type.
+../../apps/server/src/routes/auth.ts(360,51): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+../../apps/server/src/routes/auth.ts(406,27): error TS7006: Parameter 'm' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(3,18): error TS2305: Module '"@trueself/db"' has no exported member 'SessionStatus'.
+../../apps/server/src/routes/sessions.ts(189,47): error TS7006: Parameter 's' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(203,38): error TS7006: Parameter 'si' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(291,47): error TS7006: Parameter 'u' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(293,28): error TS7006: Parameter 'u' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(294,55): error TS7006: Parameter 'u' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(297,38): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(300,29): error TS7006: Parameter 'uid' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(317,34): error TS7006: Parameter 'si' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(342,51): error TS7006: Parameter 'si' implicitly has an 'any' type.
+../../apps/server/src/routes/sessions.ts(361,44): error TS7006: Parameter 'si' implicitly has an 'any' type.
 ../../apps/web/src/actions/auth.ts(11,8): error TS2307: Cannot find module '@/lib/definitions' or its corresponding type declarations.
 ../../apps/web/src/actions/auth.ts(12,58): error TS2307: Cannot find module '@/lib/session' or its corresponding type declarations.
 ../../apps/web/src/actions/auth.ts(13,25): error TS2307: Cannot find module '@/lib/constants' or its corresponding type declarations.
+../../apps/web/src/actions/sessions.ts(3,28): error TS2307: Cannot find module '@/lib/session' or its corresponding type declarations.
+../../apps/web/src/actions/sessions.ts(4,25): error TS2307: Cannot find module '@/lib/constants' or its corresponding type declarations.
 ../../apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx(4,30): error TS2307: Cannot find module '@/actions/auth' or its corresponding type declarations.
 ../../apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx(5,27): error TS2307: Cannot find module '@/components/form-field' or its corresponding type declarations.
 ../../apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx(6,30): error TS2307: Cannot find module '@/components/submit-button' or its corresponding type declarations.
@@ -32,7 +49,7 @@
 ../../apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx(75,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx(76,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(auth)/invite/[token]/page.tsx(1,25): error TS2307: Cannot find module '@/lib/constants' or its corresponding type declarations.
-../../apps/web/src/app/(auth)/invite/[token]/page.tsx(2,34): error TS6142: Module './accept-invite-form' was resolved to '/Users/m3/Work/trueself/apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx', but '--jsx' is not set.
+../../apps/web/src/app/(auth)/invite/[token]/page.tsx(2,34): error TS6142: Module './accept-invite-form' was resolved to '/Users/m3/Work/trueself/.claude/worktrees/focused-wiles/apps/web/src/app/(auth)/invite/[token]/accept-invite-form.tsx', but '--jsx' is not set.
 ../../apps/web/src/app/(auth)/invite/[token]/page.tsx(25,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(auth)/invite/[token]/page.tsx(26,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(auth)/invite/[token]/page.tsx(27,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
@@ -201,29 +218,70 @@
 ../../apps/web/src/app/(dashboard)/dashboard/page.tsx(204,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/page.tsx(210,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/page.tsx(214,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(2,29): error TS2307: Cannot find module '@/lib/session' or its corresponding type declarations.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(12,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(14,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(15,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(16,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(17,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(21,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(22,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(23,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(30,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(31,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(32,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(33,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(40,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(49,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(52,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(56,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(57,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(60,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(61,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(67,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(69,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(76,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(2,28): error TS2307: Cannot find module '@/lib/session' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(3,25): error TS2307: Cannot find module '@/lib/constants' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(4,33): error TS6142: Module './sessions-content' was resolved to '/Users/m3/Work/trueself/.claude/worktrees/focused-wiles/apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx', but '--jsx' is not set.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/page.tsx(28,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(5,33): error TS2307: Cannot find module '@/components/new-session-modal' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(6,37): error TS2307: Cannot find module '@/components/session-detail-drawer' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(7,46): error TS2307: Cannot find module '@/actions/sessions' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(9,46): error TS2307: Cannot find module '@/components/notification-permission-banner' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(10,34): error TS2307: Cannot find module '@/hooks/use-interviewer-ws' or its corresponding type declarations.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(44,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(83,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(87,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(88,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(89,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(90,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(94,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(95,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(96,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(97,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(100,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(105,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(108,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(110,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(111,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(111,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(111,69): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(116,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(119,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(129,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(130,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(156,24): error TS7031: Binding element 'status' implicitly has an 'any' type.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(161,21): error TS7006: Parameter 'connected' implicitly has an 'any' type.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(217,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(218,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(227,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(238,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(243,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(244,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(247,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(248,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(249,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(250,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(252,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(256,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(257,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(264,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(268,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(279,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(292,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(293,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(294,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(295,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(296,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(299,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(302,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(310,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(320,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(321,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(323,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(335,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(336,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(339,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(340,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/app/(dashboard)/dashboard/sessions/sessions-content.tsx(347,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/settings/page.tsx(2,29): error TS2307: Cannot find module '@/lib/session' or its corresponding type declarations.
 ../../apps/web/src/app/(dashboard)/dashboard/settings/page.tsx(16,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/settings/page.tsx(18,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
@@ -304,7 +362,7 @@
 ../../apps/web/src/app/(dashboard)/dashboard/team/invite-form.tsx(123,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(2,29): error TS2307: Cannot find module '@/lib/session' or its corresponding type declarations.
 ../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(3,26): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
-../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(4,28): error TS6142: Module './invite-form' was resolved to '/Users/m3/Work/trueself/apps/web/src/app/(dashboard)/dashboard/team/invite-form.tsx', but '--jsx' is not set.
+../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(4,28): error TS6142: Module './invite-form' was resolved to '/Users/m3/Work/trueself/.claude/worktrees/focused-wiles/apps/web/src/app/(dashboard)/dashboard/team/invite-form.tsx', but '--jsx' is not set.
 ../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(40,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(43,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/app/(dashboard)/dashboard/team/page.tsx(44,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
@@ -395,6 +453,21 @@
 ../../apps/web/src/components/form-field.tsx(54,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/form-field.tsx(59,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/form-field.tsx(65,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(62,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(64,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(66,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(72,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(78,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(79,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(88,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(89,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(101,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(103,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(104,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(109,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(112,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(113,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/invitee-multi-select.tsx(114,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/logo.tsx(10,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/logo.tsx(11,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/logo.tsx(16,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
@@ -402,9 +475,106 @@
 ../../apps/web/src/components/logo.tsx(28,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/logo.tsx(35,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/logo.tsx(39,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(4,61): error TS2307: Cannot find module '@/actions/sessions' or its corresponding type declarations.
+../../apps/web/src/components/new-session-modal.tsx(6,58): error TS2307: Cannot find module '@/components/invitee-multi-select' or its corresponding type declarations.
+../../apps/web/src/components/new-session-modal.tsx(149,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(156,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(162,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(163,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(166,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(168,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(169,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(170,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(171,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(173,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(178,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(179,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(184,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(185,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(186,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(187,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(197,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(198,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(199,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(208,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(209,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(210,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(219,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(220,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(221,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(226,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(227,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(228,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(229,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(230,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(234,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(235,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(236,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(245,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(246,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(247,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(256,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(257,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(263,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(264,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(265,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(270,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(271,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(272,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(278,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(279,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(286,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(299,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(301,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(302,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(303,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(304,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(307,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(308,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(309,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(314,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(315,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(316,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(317,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(321,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(333,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(334,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(334,106): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(338,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(339,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(339,121): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(339,171): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(347,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(348,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(349,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(350,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(357,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(360,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(364,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(366,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(367,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(367,81): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(372,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(373,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(374,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(383,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(386,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(387,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(388,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/new-session-modal.tsx(398,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(33,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(34,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(35,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(36,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(38,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(42,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(43,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(49,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(54,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/notification-permission-banner.tsx(55,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/onboarding-wizard.tsx(4,48): error TS2307: Cannot find module '@/actions/auth' or its corresponding type declarations.
-../../apps/web/src/components/onboarding-wizard.tsx(5,27): error TS6142: Module './form-field' was resolved to '/Users/m3/Work/trueself/apps/web/src/components/form-field.tsx', but '--jsx' is not set.
-../../apps/web/src/components/onboarding-wizard.tsx(6,30): error TS6142: Module './submit-button' was resolved to '/Users/m3/Work/trueself/apps/web/src/components/submit-button.tsx', but '--jsx' is not set.
+../../apps/web/src/components/onboarding-wizard.tsx(5,27): error TS6142: Module './form-field' was resolved to '/Users/m3/Work/trueself/.claude/worktrees/focused-wiles/apps/web/src/components/form-field.tsx', but '--jsx' is not set.
+../../apps/web/src/components/onboarding-wizard.tsx(6,30): error TS6142: Module './submit-button' was resolved to '/Users/m3/Work/trueself/.claude/worktrees/focused-wiles/apps/web/src/components/submit-button.tsx', but '--jsx' is not set.
 ../../apps/web/src/components/onboarding-wizard.tsx(20,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/onboarding-wizard.tsx(21,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/onboarding-wizard.tsx(22,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
@@ -463,8 +633,96 @@
 ../../apps/web/src/components/onboarding-wizard.tsx(200,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/onboarding-wizard.tsx(206,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/onboarding-wizard.tsx(211,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(5,58): error TS2307: Cannot find module '@/components/invitee-multi-select' or its corresponding type declarations.
+../../apps/web/src/components/session-detail-drawer.tsx(6,72): error TS2307: Cannot find module '@/actions/sessions' or its corresponding type declarations.
+../../apps/web/src/components/session-detail-drawer.tsx(196,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(198,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(204,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(206,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(207,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(208,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(211,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(215,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(220,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(221,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(226,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(228,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(230,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(231,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(233,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(234,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(235,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(236,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(243,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(244,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(245,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(249,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(250,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(251,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(255,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(256,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(257,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(267,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(268,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(269,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(275,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(277,29): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(278,29): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(278,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(278,81): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(286,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(287,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(288,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(290,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(291,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(303,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(304,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(306,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(308,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(312,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(313,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(321,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(329,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(332,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(333,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(333,85): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(338,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(346,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(347,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(350,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(354,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(355,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(361,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(369,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(370,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(371,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(372,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(378,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(393,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(394,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(397,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(401,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(408,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(409,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(410,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(411,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(417,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(432,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(433,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(434,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(435,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(444,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(445,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(446,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(455,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(456,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(457,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(466,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(469,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(470,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+../../apps/web/src/components/session-detail-drawer.tsx(477,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/sidebar.tsx(4,24): error TS2307: Cannot find module '@/actions/auth' or its corresponding type declarations.
-../../apps/web/src/components/sidebar.tsx(5,22): error TS6142: Module './logo' was resolved to '/Users/m3/Work/trueself/apps/web/src/components/logo.tsx', but '--jsx' is not set.
+../../apps/web/src/components/sidebar.tsx(5,22): error TS6142: Module './logo' was resolved to '/Users/m3/Work/trueself/.claude/worktrees/focused-wiles/apps/web/src/components/logo.tsx', but '--jsx' is not set.
 ../../apps/web/src/components/sidebar.tsx(28,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/sidebar.tsx(29,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/sidebar.tsx(30,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
@@ -507,6 +765,7 @@
 ../../apps/web/src/components/submit-button.tsx(27,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/submit-button.tsx(35,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
 ../../apps/web/src/components/submit-button.tsx(41,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
-../../apps/web/src/middleware.ts(2,37): error TS2307: Cannot find module '@/lib/constants' or its corresponding type declarations.
+../../apps/web/src/proxy.ts(2,37): error TS2307: Cannot find module '@/lib/constants' or its corresponding type declarations.
+../db/src/index.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
  ELIFECYCLE  Command failed with exit code 2.
  WARN   Local package.json exists, but node_modules missing, did you mean to install?

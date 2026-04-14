@@ -9,6 +9,8 @@ pub struct AppState {
     pub session_id: Mutex<Option<String>>,
     pub heartbeat_task: Mutex<Option<tokio::task::JoinHandle<()>>>,
     pub ws_connected: Mutex<bool>,
+    /// Pending user events accumulated between heartbeats
+    pub pending_user_events: Mutex<Vec<serde_json::Value>>,
 }
 
 impl Default for AppState {
@@ -17,6 +19,7 @@ impl Default for AppState {
             session_id: Mutex::new(None),
             heartbeat_task: Mutex::new(None),
             ws_connected: Mutex::new(false),
+            pending_user_events: Mutex::new(Vec::new()),
         }
     }
 }
@@ -181,6 +184,40 @@ async fn start_monitoring(
 
     *state.session_id.lock().unwrap() = Some(session_id.clone());
     *state.ws_connected.lock().unwrap() = false;
+    state.pending_user_events.lock().unwrap().clear();
+
+    // Listen for window focus/blur to track focus_change events
+    // NOTE: OS-level keystroke/click monitoring is intentionally omitted —
+    // it requires accessibility permissions on macOS (TCC framework).
+    {
+        let app_focus = app.clone();
+        if let Some(win) = app_focus.get_webview_window("main") {
+            let app_inner = app.clone();
+            win.on_window_event(move |event| {
+                let ts = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0);
+                let event_type = match event {
+                    tauri::WindowEvent::Focused(focused) => {
+                        if *focused { Some("focus_change") } else { Some("focus_change") }
+                    }
+                    _ => None,
+                };
+                if let Some(etype) = event_type {
+                    let focused = matches!(event, tauri::WindowEvent::Focused(true));
+                    if let Some(s) = app_inner.try_state::<AppState>() {
+                        s.pending_user_events.lock().unwrap().push(serde_json::json!({
+                            "sessionId": "",  // filled in build_heartbeat
+                            "timestamp": ts,
+                            "type": etype,
+                            "metadata": { "focused": focused, "appName": "TrueSelf Agent" }
+                        }));
+                    }
+                }
+            });
+        }
+    }
 
     let app_clone = app.clone();
     let sid = session_id.clone();
@@ -256,6 +293,10 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
                     tokio::select! {
                         _ = interval.tick() => {
                             let heartbeat = build_heartbeat(&app, &session_id);
+                            let event_count = heartbeat.get("userEvents")
+                                .and_then(|v| v.as_array())
+                                .map(|a| a.len())
+                                .unwrap_or(0);
                             let payload = serde_json::json!({
                                 "type": "heartbeat",
                                 "data": heartbeat
@@ -266,6 +307,8 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
                             if ws_stream.send(msg).await.is_err() {
                                 break; // connection lost — fall through to reconnect
                             }
+                            // Notify frontend how many events were synced this tick
+                            let _ = app.emit("heartbeat_sent", serde_json::json!({ "eventCount": event_count }));
                         }
                         incoming = ws_stream.next() => {
                             match incoming {
@@ -273,9 +316,15 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
                                     if let Ok(v) =
                                         serde_json::from_str::<serde_json::Value>(&text)
                                     {
-                                        if v["type"] == "session_end" {
-                                            let _ = app.emit("session_ended", ());
-                                            return; // session is over — stop loop
+                                        match v["type"].as_str() {
+                                            Some("session_end") => {
+                                                let _ = app.emit("session_ended", ());
+                                                return; // session is over — stop loop
+                                            }
+                                            Some("interviewer_disconnected") => {
+                                                let _ = app.emit("interviewer_disconnected", ());
+                                            }
+                                            _ => {}
                                         }
                                     }
                                 }
@@ -327,6 +376,30 @@ fn build_heartbeat(app: &AppHandle, session_id: &str) -> serde_json::Value {
 
     let clipboard_events: Vec<_> = clipboard_event.into_iter().collect();
 
+    // Collect paste events from clipboard monitor as UserEvents
+    let mut user_events: Vec<serde_json::Value> = clipboard_events
+        .iter()
+        .map(|ce| serde_json::json!({
+            "sessionId": session_id,
+            "timestamp": ce.timestamp,
+            "type": "paste",
+            "metadata": {
+                "contentLength": ce.content_length,
+                "source": ce.source
+            }
+        }))
+        .collect();
+
+    // Drain accumulated focus-change events from AppState
+    if let Some(state) = app.try_state::<AppState>() {
+        let mut pending = state.pending_user_events.lock().unwrap();
+        for mut ev in pending.drain(..) {
+            // Backfill sessionId (was unknown at event time)
+            ev["sessionId"] = serde_json::Value::String(session_id.to_string());
+            user_events.push(ev);
+        }
+    }
+
     serde_json::json!({
         "sessionId": session_id,
         "timestamp": timestamp,
@@ -335,6 +408,7 @@ fn build_heartbeat(app: &AppHandle, session_id: &str) -> serde_json::Value {
         "suspiciousWindows": windows,
         "networkFlags": network_flags,
         "clipboardEvents": clipboard_events,
+        "userEvents": user_events,
         "trustScore": 100
     })
 }

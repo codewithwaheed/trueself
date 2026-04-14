@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import type { SessionListItem, TeamMember, UpdateSessionRequest } from "@trueself/shared-types";
 import { InviteeMultiSelect, type SelectedInvitee } from "@/components/invitee-multi-select";
-import { updateSession, cancelSession, resendInvite } from "@/actions/sessions";
+import { updateSession, cancelSession, resendInvite, endSession } from "@/actions/sessions";
 
 interface SessionDetailDrawerProps {
   session: SessionListItem | null;
@@ -53,6 +53,7 @@ export function SessionDetailDrawer({
   const [textCopied, setTextCopied] = useState(false);
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Edit state
@@ -69,6 +70,7 @@ export function SessionDetailDrawer({
       setTextCopied(false);
       setEmailState("idle");
       setShowCancelConfirm(false);
+      setShowEndConfirm(false);
       setActionError(null);
     }
   }, [session?.id]);
@@ -158,9 +160,24 @@ export function SessionDetailDrawer({
     });
   }
 
+  function handleEndInterview() {
+    if (!session) return;
+    startTransition(async () => {
+      const result = await endSession(session.id);
+      if (result.error) {
+        setActionError(result.error);
+        setShowEndConfirm(false);
+        return;
+      }
+      onChanged();
+      onClose();
+    });
+  }
+
   if (!session) return null;
 
   const isStatusPending = session.status === "pending";
+  const isStatusActive = session.status === "active";
   const isOwner = session.interviewerId === currentUserId;
 
   const date = new Date(session.scheduledAt);
@@ -227,6 +244,13 @@ export function SessionDetailDrawer({
                     <span className="text-xs text-navy-500">Scheduled</span>
                     <span className="text-xs text-navy-200">{formattedDate} at {formattedTime}</span>
                   </div>
+
+                  {session.plannedDurationMinutes != null && (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-navy-800/40 border border-[var(--border-subtle)]">
+                      <span className="text-xs text-navy-500">Duration</span>
+                      <span className="text-xs text-navy-200">{session.plannedDurationMinutes} min</span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between p-3 rounded-xl bg-navy-800/40 border border-[var(--border-subtle)]">
                     <span className="text-xs text-navy-500 shrink-0">Meeting link</span>
@@ -357,6 +381,45 @@ export function SessionDetailDrawer({
                           className="flex-1 px-4 py-2 rounded-xl text-sm font-medium text-white bg-critical-light hover:opacity-90 transition-opacity disabled:opacity-60"
                         >
                           {isPending ? "Cancelling…" : "Yes, cancel"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* End Interview — active sessions + owner */}
+              {isStatusActive && isOwner && (
+                <section className="space-y-3">
+                  <h3 className="text-xs font-semibold text-navy-500 uppercase tracking-widest">Actions</h3>
+
+                  {actionError && (
+                    <p className="text-xs text-critical-light">{actionError}</p>
+                  )}
+
+                  {!showEndConfirm ? (
+                    <button
+                      onClick={() => setShowEndConfirm(true)}
+                      className="w-full px-4 py-2 rounded-xl text-sm font-medium text-critical-light border border-critical-light/30 hover:bg-critical-light/10 transition-colors"
+                    >
+                      End interview
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-navy-800/40 border border-critical-light/30 space-y-3">
+                      <p className="text-sm text-navy-200">End this interview? The candidate will be disconnected and monitoring will stop.</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowEndConfirm(false)}
+                          className="flex-1 btn-secondary text-sm"
+                        >
+                          Keep going
+                        </button>
+                        <button
+                          onClick={handleEndInterview}
+                          disabled={isPending}
+                          className="flex-1 px-4 py-2 rounded-xl text-sm font-medium text-white bg-critical-light hover:opacity-90 transition-opacity disabled:opacity-60"
+                        >
+                          {isPending ? "Ending…" : "Yes, end interview"}
                         </button>
                       </div>
                     </div>

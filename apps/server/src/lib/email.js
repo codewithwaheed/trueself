@@ -2,8 +2,19 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_DOMAIN = process.env.RESEND_FROM_DOMAIN || "trueself.io";
 const FROM_ADDRESS = `TrueSelf Interviews <interviews@${FROM_DOMAIN}>`;
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
 export async function sendCandidateInvite(params) {
-    const { to, candidateName, interviewerName, companyName, sessionCode, meetingLink, scheduledAt, } = params;
+    const { to, sessionCode, meetingLink, scheduledAt, } = params;
+    const candidateName = escapeHtml(params.candidateName);
+    const interviewerName = escapeHtml(params.interviewerName);
+    const companyName = escapeHtml(params.companyName);
+    const companyNameRaw = params.companyName;
     const formattedDate = scheduledAt.toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
@@ -94,7 +105,7 @@ export async function sendCandidateInvite(params) {
     const { error } = await resend.emails.send({
         from: FROM_ADDRESS,
         to,
-        subject: `Your interview with ${companyName} — session details`,
+        subject: `Your interview with ${companyNameRaw} — session details`,
         html,
     });
     if (error) {

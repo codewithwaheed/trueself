@@ -123,6 +123,7 @@ export interface CreateSessionRequest {
   scheduledAt: string; // ISO 8601
   sendEmail?: boolean;
   inviteeIds?: string[];
+  plannedDurationMinutes?: number;
 }
 
 export interface CreateSessionResponse {
@@ -132,6 +133,9 @@ export interface CreateSessionResponse {
   candidateEmail: string;
   meetingLink: string;
   scheduledAt: string;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  plannedDurationMinutes?: number | null;
   status: "pending" | "active" | "completed" | "cancelled";
   createdAt: string;
   invitees: SessionInvitee[];
@@ -144,6 +148,9 @@ export interface SessionListItem {
   candidateEmail: string;
   meetingLink: string;
   scheduledAt: string;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  plannedDurationMinutes?: number | null;
   status: "pending" | "active" | "completed" | "cancelled";
   overallScore: number | null;
   createdAt: string;
@@ -155,6 +162,25 @@ export interface SessionDetail extends SessionListItem {
   // SessionListItem already includes invitees — no extra fields needed yet
 }
 
+// ---- Session Status Update (WebSocket message to dashboard) ----
+
+export interface SessionStatusUpdate {
+  type: "session_status_update";
+  sessionId: string;
+  status: "active" | "completed";
+  startedAt?: string;
+  endedAt?: string;
+}
+
+// ---- Event Logging ----
+
+export interface UserEvent {
+  sessionId: string;
+  timestamp: number; // ms since epoch
+  type: "keystroke" | "mouse_click" | "focus_change" | "tab_switch" | "copy" | "paste" | "network_request";
+  metadata?: Record<string, unknown>; // domain for network_request, appName for focus_change, etc.
+}
+
 // Real-time data the agent sends via WebSocket
 export interface AgentHeartbeat {
   sessionId: string;
@@ -164,6 +190,7 @@ export interface AgentHeartbeat {
   suspiciousWindows: WindowInfo[];
   networkFlags: NetworkFlag[];
   clipboardEvents: ClipboardEvent[];
+  userEvents: UserEvent[];
   trustScore: number;            // 0-100 computed on server
 }
 
@@ -233,10 +260,11 @@ export type WSMessageFromAgent =
   | { type: "alert"; data: TrustEvent }
   | { type: "preflight_result"; data: PreflightResult };
 
-export type WSMessageToAgent = 
+export type WSMessageToAgent =
   | { type: "session_start"; sessionId: string }
   | { type: "session_end" }
-  | { type: "config_update"; config: AgentConfig };
+  | { type: "config_update"; config: AgentConfig }
+  | { type: "interviewer_disconnected"; sessionId: string };
 
 export interface PreflightResult {
   passed: boolean;

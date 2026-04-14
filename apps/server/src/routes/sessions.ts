@@ -24,6 +24,7 @@ const CreateSessionSchema = z.object({
   scheduledAt: z.string().datetime({ message: "scheduledAt must be a valid ISO 8601 date" }),
   sendEmail: z.boolean().optional().default(false),
   inviteeIds: z.array(z.string()).optional().default([]),
+  plannedDurationMinutes: z.number().int().min(1).max(480).optional(),
 });
 
 // ---- Helpers ----
@@ -47,6 +48,9 @@ function toSessionResponse(
     candidateEmail: string;
     meetingLink: string;
     scheduledAt: Date;
+    startedAt?: Date | null;
+    endedAt?: Date | null;
+    plannedDurationMinutes?: number | null;
     status: string;
     createdAt: Date;
   },
@@ -59,6 +63,9 @@ function toSessionResponse(
     candidateEmail: session.candidateEmail,
     meetingLink: session.meetingLink,
     scheduledAt: session.scheduledAt.toISOString(),
+    startedAt: session.startedAt?.toISOString() ?? null,
+    endedAt: session.endedAt?.toISOString() ?? null,
+    plannedDurationMinutes: session.plannedDurationMinutes ?? null,
     status: session.status.toLowerCase() as CreateSessionResponse["status"],
     createdAt: session.createdAt.toISOString(),
     invitees,
@@ -87,7 +94,7 @@ sessions.post("/", async (c) => {
     return c.json({ error: firstError, fieldErrors: errors }, 400);
   }
 
-  const { candidateName, candidateEmail, meetingLink, scheduledAt, sendEmail, inviteeIds } = parsed.data;
+  const { candidateName, candidateEmail, meetingLink, scheduledAt, sendEmail, inviteeIds, plannedDurationMinutes } = parsed.data;
   const interviewerId = c.get("userId");
   const companyId = c.get("companyId");
 
@@ -125,6 +132,7 @@ sessions.post("/", async (c) => {
       candidateEmail,
       meetingLink,
       scheduledAt: new Date(scheduledAt),
+      ...(plannedDurationMinutes != null ? { plannedDurationMinutes } : {}),
       sessionInvitees: {
         create: allInvitees.map((u) => ({ userId: u.id })),
       },
@@ -185,6 +193,9 @@ sessions.get("/", async (c) => {
     candidateEmail: s.candidateEmail,
     meetingLink: s.meetingLink,
     scheduledAt: s.scheduledAt.toISOString(),
+    startedAt: s.startedAt?.toISOString() ?? null,
+    endedAt: s.endedAt?.toISOString() ?? null,
+    plannedDurationMinutes: s.plannedDurationMinutes ?? null,
     status: s.status.toLowerCase() as SessionListItem["status"],
     overallScore: s.overallScore,
     createdAt: s.createdAt.toISOString(),
@@ -340,6 +351,9 @@ sessions.get("/:id", async (c) => {
     candidateEmail: session.candidateEmail,
     meetingLink: session.meetingLink,
     scheduledAt: session.scheduledAt.toISOString(),
+    startedAt: session.startedAt?.toISOString() ?? null,
+    endedAt: session.endedAt?.toISOString() ?? null,
+    plannedDurationMinutes: session.plannedDurationMinutes ?? null,
     status: session.status.toLowerCase() as SessionDetail["status"],
     overallScore: session.overallScore,
     createdAt: session.createdAt.toISOString(),
