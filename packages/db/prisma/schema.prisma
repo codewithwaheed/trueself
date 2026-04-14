@@ -61,24 +61,26 @@ enum InvitationStatus {
 }
 
 model InterviewSession {
-  id             String        @id @default(cuid())
-  sessionCode    String        @unique // 6-digit code
-  companyId      String
-  company        Company       @relation(fields: [companyId], references: [id])
-  interviewerId  String
-  interviewer    User          @relation(fields: [interviewerId], references: [id])
-  candidateEmail String
-  candidateName  String?
-  meetingLink    String        // Zoom/Meet/Teams URL
-  scheduledAt    DateTime
-  startedAt      DateTime?
-  endedAt        DateTime?
-  status         SessionStatus @default(PENDING)
-  trustEvents     TrustEvent[]
-  sessionInvitees SessionInvitee[]
-  trustReport    Json?         // final report JSON
-  overallScore   Int?          // 0-100
-  createdAt      DateTime      @default(now())
+  id                     String        @id @default(cuid())
+  sessionCode            String        @unique // 6-digit code
+  companyId              String
+  company                Company       @relation(fields: [companyId], references: [id])
+  interviewerId          String
+  interviewer            User          @relation(fields: [interviewerId], references: [id])
+  candidateEmail         String
+  candidateName          String?
+  meetingLink            String        // Zoom/Meet/Teams URL
+  scheduledAt            DateTime
+  startedAt              DateTime?
+  endedAt                DateTime?
+  plannedDurationMinutes Int?          // e.g. 60
+  status                 SessionStatus @default(PENDING)
+  trustEvents            TrustEvent[]
+  sessionInvitees        SessionInvitee[]
+  events                 SessionEvent[]
+  trustReport            Json?         // final report JSON
+  overallScore           Int?          // 0-100
+  createdAt              DateTime      @default(now())
 }
 
 enum SessionStatus {
@@ -97,6 +99,18 @@ model TrustEvent {
   message   String
   data      Json?
   timestamp DateTime         @default(now())
+}
+
+model SessionEvent {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id])
+  timestamp DateTime
+  type      String
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@index([sessionId, timestamp])
 }
 
 model SessionInvitee {

@@ -139,3 +139,24 @@ export async function cancelSession(
 
   return { ok: true };
 }
+
+export async function endSession(
+  sessionId: string
+): Promise<{ ok?: boolean; error?: string }> {
+  if (!/^[a-zA-Z0-9_-]+$/.test(sessionId)) return { error: "Invalid session ID" };
+
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const res = await fetch(`${API_URL}/api/sessions/${sessionId}/end`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session.apiToken}` },
+  });
+
+  if (!res.ok) {
+    const body = await res.json();
+    return { error: body.error || "Failed to end session" };
+  }
+
+  return { ok: true };
+}

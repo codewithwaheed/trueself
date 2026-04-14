@@ -5,8 +5,7 @@ import { createServer } from "http";
 import { prisma } from "@trueself/db";
 import authRoutes from "./routes/auth";
 import sessionsRoutes from "./routes/sessions";
-import { recordHeartbeat, startWatchdog, onAgentReconnect } from "./ws/watchdog";
-import { computeTrustScore, heartbeatToFactors } from "./ws/trust-engine";
+import { requireAuth } from "./middleware/auth";
 const app = new Hono();
 app.use("*", cors({
     origin: process.env.WEB_URL || "http://localhost:3000",
@@ -61,39 +60,115 @@ app.route("/api/sessions", sessionsRoutes);
 // ---- WebSocket for real-time agent <-> dashboard ----
 const server = createServer();
 const wss = new WebSocketServer({ server });
-// Track connections: sessionId -> { agent: ws, dashboards: ws[] }
-const sessions = new Map();
-// Track which agents were previously connected (for reconnect detection)
-const agentEverConnected = new Set();
-wss.on("connection", (ws, req) => {
+// Track connections: sessionId -> { agent?: ws, dashboards: Set<ws> }
+const wsSessions = new Map();
+// Helper: send a JSON message to the agent for a given session
+function sendToAgent(sessionId, payload) {
+    const entry = wsSessions.get(sessionId);
+    if (entry?.agent && entry.agent.readyState === WebSocket.OPEN) {
+        entry.agent.send(JSON.stringify(payload));
+    }
+}
+// Helper: broadcast a JSON message to all dashboards watching a session
+function broadcastToDashboards(sessionId, payload) {
+    const entry = wsSessions.get(sessionId);
+    if (!entry)
+        return;
+    const raw = JSON.stringify(payload);
+    entry.dashboards.forEach((d) => {
+        if (d.readyState === WebSocket.OPEN)
+            d.send(raw);
+    });
+}
+const endSessionRoute = new Hono();
+endSessionRoute.use("*", requireAuth);
+endSessionRoute.post("/:id/end", async (c) => {
+    const sessionId = c.req.param("id");
+    const userId = c.get("userId");
+    const userRole = c.get("userRole");
+    const companyId = c.get("companyId");
+    const session = await prisma.interviewSession.findUnique({
+        where: { id: sessionId },
+    });
+    if (!session || session.companyId !== companyId) {
+        return c.json({ error: "Session not found" }, 404);
+    }
+    if (session.interviewerId !== userId && userRole !== "ADMIN") {
+        return c.json({ error: "Forbidden" }, 403);
+    }
+    if (session.status !== "ACTIVE") {
+        return c.json({ error: "Only active sessions can be ended" }, 409);
+    }
+    const endedAt = new Date();
+    const updated = await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: "COMPLETED", endedAt },
+    });
+    // Notify agent that session has ended
+    sendToAgent(sessionId, { type: "session_end" });
+    // Notify dashboards
+    broadcastToDashboards(sessionId, {
+        type: "session_status_update",
+        sessionId,
+        status: "completed",
+        endedAt: endedAt.toISOString(),
+    });
+    return c.json({
+        id: updated.id,
+        status: updated.status.toLowerCase(),
+        endedAt: updated.endedAt?.toISOString() ?? null,
+    });
+});
+app.route("/api/sessions", endSessionRoute);
+wss.on("connection", async (ws, req) => {
     const url = new URL(req.url || "", `http://${req.headers.host}`);
     const sessionId = url.searchParams.get("sessionId");
-    const role = url.searchParams.get("role"); // "agent" or "dashboard"
+    const role = url.searchParams.get("role"); // "agent" or "dashboard" (or "interviewer")
     if (!sessionId || !role) {
         ws.close(1008, "Missing sessionId or role");
         return;
     }
-    // Initialize session tracking
-    if (!sessions.has(sessionId)) {
-        sessions.set(sessionId, { dashboards: new Set() });
+    // Reject if session is CANCELLED or COMPLETED
+    const dbSession = await prisma.interviewSession.findUnique({
+        where: { id: sessionId },
+        select: { id: true, status: true, startedAt: true },
+    });
+    if (!dbSession) {
+        ws.close(1008, "Session not found");
+        return;
     }
-    const session = sessions.get(sessionId);
+    if (dbSession.status === "CANCELLED" || dbSession.status === "COMPLETED") {
+        ws.close(1008, `Session is ${dbSession.status.toLowerCase()}`);
+        return;
+    }
+    // Initialize session tracking
+    if (!wsSessions.has(sessionId)) {
+        wsSessions.set(sessionId, { dashboards: new Set() });
+    }
+    const wsEntry = wsSessions.get(sessionId);
     if (role === "agent") {
-        const wasConnected = agentEverConnected.has(sessionId);
-        session.agent = ws;
-        agentEverConnected.add(sessionId);
-        if (wasConnected) {
-            // Reconnect: clear watchdog disconnect state and notify dashboards
-            onAgentReconnect(sessionId, () => sessions);
+        wsEntry.agent = ws;
+        // Transition PENDING -> ACTIVE and set startedAt (Task 2)
+        if (dbSession.status === "PENDING") {
+            const startedAt = new Date();
+            await prisma.interviewSession.update({
+                where: { id: sessionId },
+                data: { status: "ACTIVE", startedAt },
+            });
+            // Notify any already-connected dashboards
+            broadcastToDashboards(sessionId, {
+                type: "session_status_update",
+                sessionId,
+                status: "active",
+                startedAt: startedAt.toISOString(),
+            });
         }
-        else {
-            // First connection
-            recordHeartbeat(sessionId);
-            session.dashboards.forEach((d) => d.send(JSON.stringify({ type: "agent_status", sessionId, connected: true })));
-        }
+        // Notify dashboards that agent connected (covers re-connections to already-ACTIVE session)
+        broadcastToDashboards(sessionId, { type: "agent_status", connected: true });
     }
     else {
-        session.dashboards.add(ws);
+        // role === "dashboard" or "interviewer"
+        wsEntry.dashboards.add(ws);
     }
     ws.on("message", async (raw) => {
         let msg;
@@ -101,64 +176,64 @@ wss.on("connection", (ws, req) => {
             msg = JSON.parse(raw.toString());
         }
         catch {
-            return;
+            return; // ignore malformed messages
         }
         if (role === "agent") {
-            // Forward raw agent data to dashboards (backwards compat)
-            session.dashboards.forEach((d) => {
+            // Forward agent data to all dashboard viewers
+            const rawStr = raw.toString();
+            wsEntry.dashboards.forEach((d) => {
                 if (d.readyState === WebSocket.OPEN) {
-                    d.send(raw.toString());
+                    d.send(rawStr);
                 }
             });
-            if (msg.type === "heartbeat") {
-                const heartbeat = msg.data;
-                // Record heartbeat time for watchdog
-                recordHeartbeat(sessionId);
-                // Compute trust score and broadcast trust_update to dashboards
-                const factors = heartbeatToFactors(heartbeat, false);
-                const score = computeTrustScore(factors);
-                const trustUpdate = {
-                    type: "trust_update",
-                    sessionId,
-                    score,
-                    factors,
-                    timestamp: new Date().toISOString(),
-                };
-                const trustPayload = JSON.stringify(trustUpdate);
-                session.dashboards.forEach((d) => {
-                    if (d.readyState === WebSocket.OPEN) {
-                        d.send(trustPayload);
-                    }
-                });
-            }
             // Persist critical events to DB
             if (msg.type === "alert") {
-                const event = msg.data;
                 await prisma.trustEvent.create({
                     data: {
                         sessionId,
-                        type: event.type,
-                        severity: event.severity,
-                        message: event.message,
-                        timestamp: new Date(event.timestamp),
+                        type: msg.data.type,
+                        severity: msg.data.severity,
+                        message: msg.data.message,
+                        timestamp: new Date(msg.data.timestamp),
                     },
                 });
             }
+            // Persist user events from heartbeat (Task 7C)
+            if (msg.type === "heartbeat") {
+                const events = msg.data.userEvents ?? [];
+                if (events.length > 0) {
+                    await prisma.sessionEvent.createMany({
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        data: events.map((e) => ({
+                            sessionId,
+                            timestamp: new Date(e.timestamp),
+                            type: e.type,
+                            metadata: (e.metadata ?? null),
+                        })),
+                        skipDuplicates: true,
+                    });
+                }
+            }
         }
     });
-    ws.on("close", () => {
+    ws.on("close", async () => {
         if (role === "agent") {
-            session.agent = undefined;
-            // Don't immediately broadcast disconnect — watchdog handles the 10s gap check
-            // and will send agent_status { connected: false } after the gap threshold.
+            wsEntry.agent = undefined;
+            broadcastToDashboards(sessionId, { type: "agent_status", connected: false });
         }
         else {
-            session.dashboards.delete(ws);
+            wsEntry.dashboards.delete(ws);
+            // Task 5: notify agent when interviewer disconnects during an active session
+            const current = await prisma.interviewSession.findUnique({
+                where: { id: sessionId },
+                select: { status: true },
+            });
+            if (current?.status === "ACTIVE") {
+                sendToAgent(sessionId, { type: "interviewer_disconnected", sessionId });
+            }
         }
     });
 });
-// Start heartbeat watchdog — checks every 5 seconds for stale agents
-startWatchdog(() => sessions);
 // Mount Hono on the HTTP server
 server.on("request", (req, res) => {
     // Collect body for POST/PATCH/PUT requests

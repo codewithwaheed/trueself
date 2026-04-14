@@ -114,11 +114,18 @@
         <span id="lockdown-label">Network Locked</span>
       </div>
 
+      <p class="ready-hint">TrueSelf is running in the background.</p>
+      <p class="ready-hint">Your interviewer can see your trust score in real time.</p>
+      <p id="ready-event-sync" style="font-size:11px;color:#6b7fa8;opacity:0;transition:opacity 0.3s;margin-top:4px;height:16px;"></p>
+
       <div class="event-log">
         <div class="event-log-title">Recent Events</div>
         <div id="event-log-entries"></div>
       </div>
 
+      <button id="back-to-tray-btn" class="btn-primary">
+        Minimize to Tray
+      </button>
       <button id="end-interview-btn" class="btn-danger">End Interview</button>
     </div>
 

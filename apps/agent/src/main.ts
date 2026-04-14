@@ -757,6 +757,36 @@ function showInterviewEndedScreen() {
 
 // ---- WS Status Events (from Rust backend) ----
 
+function showNotification(message: string, durationMs = 5000) {
+  let notif = document.getElementById("ready-notification");
+  if (!notif) {
+    notif = document.createElement("div");
+    notif.id = "ready-notification";
+    notif.style.cssText = [
+      "position:fixed",
+      "bottom:16px",
+      "left:50%",
+      "transform:translateX(-50%)",
+      "background:rgba(30,40,60,0.95)",
+      "border:1px solid rgba(255,255,255,0.1)",
+      "color:#c9d1e8",
+      "font-size:12px",
+      "padding:8px 14px",
+      "border-radius:8px",
+      "pointer-events:none",
+      "z-index:999",
+      "opacity:0",
+      "transition:opacity 0.2s",
+    ].join(";");
+    document.body.appendChild(notif);
+  }
+  notif.textContent = message;
+  notif.style.opacity = "1";
+  setTimeout(() => {
+    if (notif) notif.style.opacity = "0";
+  }, durationMs);
+}
+
 async function setupEvents() {
   await listen<{ connected: boolean }>("ws_status", (event) => {
     const { connected } = event.payload;
@@ -792,6 +822,22 @@ async function setupEvents() {
     sessionStartTime = null;
     showScreen("screen-welcome");
     (document.getElementById("code-input") as HTMLInputElement).value = "";
+  });
+
+  await listen("interviewer_disconnected", () => {
+    showNotification("Interviewer has disconnected");
+    // Do NOT stop monitoring — interview may still be in progress
+  });
+
+  await listen<{ eventCount: number }>("heartbeat_sent", (event) => {
+    const syncEl = document.getElementById("ready-event-sync");
+    if (!syncEl) return;
+    const count = event.payload.eventCount;
+    if (count > 0) {
+      syncEl.textContent = `${count} event${count === 1 ? "" : "s"} synced`;
+      syncEl.style.opacity = "1";
+      setTimeout(() => { syncEl.style.opacity = "0"; }, 2000);
+    }
   });
 
   await listen("rerun_preflight", () => {

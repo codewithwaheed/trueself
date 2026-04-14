@@ -6,6 +6,8 @@ import { NewSessionModal } from "@/components/new-session-modal";
 import { SessionDetailDrawer } from "@/components/session-detail-drawer";
 import { resendInvite, getTeamMembers } from "@/actions/sessions";
 import type { SessionListItem, TeamMember } from "@trueself/shared-types";
+import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
+import { useInterviewerWS } from "@/hooks/use-interviewer-ws";
 
 const PAGE_SIZE = 10;
 
@@ -158,6 +160,23 @@ export function SessionsContent({
   const [resendToast, setResendToast] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
+  // Connect to the active session's WebSocket feed (if any active session is open in the drawer)
+  const activeSessionId = drawerSession?.status === "active" ? drawerSession.id : null;
+  useInterviewerWS({
+    sessionId: activeSessionId,
+    onStatusUpdate: ({ status }: { status: string }) => {
+      if (status === "completed" || status === "active") {
+        router.refresh();
+      }
+    },
+    onAgentStatus: (connected) => {
+      if (!connected) {
+        setResendToast("Agent disconnected");
+        setTimeout(() => setResendToast(null), 4000);
+      }
+    },
+  });
+
   const tabs: TabKey[] = ["upcoming", "active", "completed"];
 
   const filtered = useMemo(
@@ -233,6 +252,8 @@ export function SessionsContent({
       )}
 
       <div className="max-w-5xl">
+        <NotificationPermissionBanner />
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

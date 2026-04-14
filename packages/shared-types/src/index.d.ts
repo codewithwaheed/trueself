@@ -93,6 +93,7 @@ export interface CreateSessionRequest {
     scheduledAt: string;
     sendEmail?: boolean;
     inviteeIds?: string[];
+    plannedDurationMinutes?: number;
 }
 export interface CreateSessionResponse {
     id: string;
@@ -101,6 +102,9 @@ export interface CreateSessionResponse {
     candidateEmail: string;
     meetingLink: string;
     scheduledAt: string;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    plannedDurationMinutes?: number | null;
     status: "pending" | "active" | "completed" | "cancelled";
     createdAt: string;
     invitees: SessionInvitee[];
@@ -112,6 +116,9 @@ export interface SessionListItem {
     candidateEmail: string;
     meetingLink: string;
     scheduledAt: string;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    plannedDurationMinutes?: number | null;
     status: "pending" | "active" | "completed" | "cancelled";
     overallScore: number | null;
     createdAt: string;
@@ -119,6 +126,19 @@ export interface SessionListItem {
     interviewerId: string;
 }
 export interface SessionDetail extends SessionListItem {
+}
+export interface SessionStatusUpdate {
+    type: "session_status_update";
+    sessionId: string;
+    status: "active" | "completed";
+    startedAt?: string;
+    endedAt?: string;
+}
+export interface UserEvent {
+    sessionId: string;
+    timestamp: number;
+    type: "keystroke" | "mouse_click" | "focus_change" | "tab_switch" | "copy" | "paste" | "network_request";
+    metadata?: Record<string, unknown>;
 }
 export interface AgentHeartbeat {
     sessionId: string;
@@ -128,9 +148,8 @@ export interface AgentHeartbeat {
     suspiciousWindows: WindowInfo[];
     networkFlags: NetworkFlag[];
     clipboardEvents: ClipboardEvent[];
+    userEvents: UserEvent[];
     trustScore: number;
-    lockdownActive?: boolean;
-    sessionElapsedSeconds?: number;
 }
 export interface ScreenInfo {
     id: number;
@@ -212,10 +231,6 @@ export type WSMessageFromAgent = {
 } | {
     type: "preflight_result";
     data: PreflightResult;
-} | {
-    type: "session_start";
-    sessionId: string;
-    timestamp: string;
 };
 export type WSMessageToAgent = {
     type: "session_start";
@@ -226,13 +241,8 @@ export type WSMessageToAgent = {
     type: "config_update";
     config: AgentConfig;
 } | {
-    type: "lockdown_command";
-    action: "start" | "stop";
-} | {
-    type: "session_alert";
-    severity: "info" | "warning" | "critical";
-    message: string;
-    timestamp: string;
+    type: "interviewer_disconnected";
+    sessionId: string;
 };
 export interface PreflightResult {
     passed: boolean;
@@ -249,41 +259,4 @@ export interface AgentConfig {
     monitorClipboard: boolean;
     monitorNetwork: boolean;
 }
-export interface LockdownStatus {
-    phase: "inactive" | "processes_suspended" | "dns_active" | "fully_locked" | "cleaning_up";
-    suspendedPids: number[];
-    dnsActive: boolean;
-    verificationResult?: "pending" | "blocked" | "failed";
-}
-export interface SessionOverlayData {
-    sessionId: string;
-    startedAt: string;
-    elapsedSeconds: number;
-    lockdownActive: boolean;
-}
-export interface TrustUpdate {
-    type: "trust_update";
-    sessionId: string;
-    score: number;
-    factors: {
-        aiProcessDetected: boolean;
-        suspiciousOverlay: boolean;
-        screenCountChanged: boolean;
-        clipboardAiContent: boolean;
-        agentDisconnected: boolean;
-    };
-    timestamp: string;
-}
-export interface AgentStatusUpdate {
-    type: "agent_status";
-    sessionId: string;
-    connected: boolean;
-    disconnectedSince?: string;
-}
-export type WSMessageToDashboard = TrustUpdate | AgentStatusUpdate | {
-    type: "session_alert";
-    severity: string;
-    message: string;
-    timestamp: string;
-};
 //# sourceMappingURL=index.d.ts.map

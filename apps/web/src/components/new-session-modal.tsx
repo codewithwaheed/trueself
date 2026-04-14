@@ -55,6 +55,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName, current
   const firstInputRef = useRef<HTMLInputElement>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedInvitees, setSelectedInvitees] = useState<SelectedInvitee[]>([]);
+  const [plannedDurationMinutes, setPlannedDurationMinutes] = useState<number>(60);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -66,6 +67,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName, current
       setTextCopyState("idle");
       setEmailState("idle");
       setSendEmail(true);
+      setPlannedDurationMinutes(60);
       setSelectedInvitees([{ id: currentUserId, name: currentUserName, email: "" }]);
       getTeamMembers().then(setTeamMembers);
       setTimeout(() => firstInputRef.current?.focus(), 50);
@@ -98,6 +100,7 @@ export function NewSessionModal({ open, onClose, onCreated, companyName, current
       meetingLink: (form.elements.namedItem("meetingLink") as HTMLInputElement).value.trim(),
       scheduledAt: new Date(rawScheduled).toISOString(),
       sendEmail,
+      plannedDurationMinutes,
       inviteeIds: selectedInvitees
         .filter((i) => i.id !== currentUserId)
         .map((i) => i.id),
@@ -211,6 +214,21 @@ export function NewSessionModal({ open, onClose, onCreated, companyName, current
                     className="input-field focus-ring"
                     style={{ colorScheme: "dark" }}
                   />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-navy-200">Duration</label>
+                  <select
+                    value={plannedDurationMinutes}
+                    onChange={(e) => setPlannedDurationMinutes(Number(e.target.value))}
+                    className="input-field focus-ring"
+                  >
+                    <option value={30}>30 minutes</option>
+                    <option value={45}>45 minutes</option>
+                    <option value={60}>60 minutes</option>
+                    <option value={90}>90 minutes</option>
+                    <option value={120}>120 minutes</option>
+                  </select>
                 </div>
 
                 <div className="space-y-1.5">
