@@ -23,3 +23,13 @@ futures-util = "0.3"
 url = "2"
 chrono = "0.4"
 reqwest = { version = "0.12", features = ["json"] }
+hickory-server = "0.24"
+hickory-resolver = "0.24"
+async-trait = "0.1"
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.27", features = ["signal", "process"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+ntapi = "0.4"
+winapi = { version = "0.3", features = ["processthreadsapi", "winnt", "handleapi"] }

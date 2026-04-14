@@ -1,0 +1,104 @@
+<h2>How should detected AI tools appear in the preflight screen?</h2>
+<p class="subtitle">When "Scanning processes" fails, how should we show the detected tools and let the candidate close them?</p>
+
+<div class="cards">
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0f0f11;border-radius:8px;padding:16px;font-family:system-ui,sans-serif;font-size:13px;color:#e5e7eb;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" fill="#ef444430" stroke="#ef4444" stroke-width="1.5"/><path d="M6 6l6 6M12 6l-6 6" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span style="color:#94a3b8;">Scanning processes</span>
+          <span style="color:#ef4444;font-size:11px;">2 AI tools detected</span>
+        </div>
+        <div style="background:#1e1e24;border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+              <span style="color:#e5e7eb;">Claude</span>
+              <span style="color:#6b7280;font-size:11px;">pid 12483</span>
+            </div>
+            <button style="background:#ef444420;color:#ef4444;border:1px solid #ef444440;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">Quit</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+              <span style="color:#e5e7eb;">Cursor</span>
+              <span style="color:#6b7280;font-size:11px;">pid 18821</span>
+            </div>
+            <button style="background:#ef444420;color:#ef4444;border:1px solid #ef444440;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">Quit</button>
+          </div>
+          <div style="border-top:1px solid #2a2a35;padding-top:8px;margin-top:2px;">
+            <button style="background:#ef4444;color:#fff;border:none;border-radius:5px;padding:5px 14px;font-size:12px;cursor:pointer;width:100%;">Quit All &amp; Re-run</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Inline list with individual Quit buttons</h3>
+      <p>Each detected tool gets its own row with a Quit button. A "Quit All &amp; Re-run" button at the bottom handles bulk action. Gives the most control.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0f0f11;border-radius:8px;padding:16px;font-family:system-ui,sans-serif;font-size:13px;color:#e5e7eb;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" fill="#ef444430" stroke="#ef4444" stroke-width="1.5"/><path d="M6 6l6 6M12 6l-6 6" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span style="color:#94a3b8;">Scanning processes</span>
+        </div>
+        <div style="background:#1e1e24;border-radius:6px;padding:12px;">
+          <div style="color:#f87171;font-size:12px;margin-bottom:10px;">⚠ 2 AI tools are running: <strong>Claude, Cursor</strong></div>
+          <div style="color:#94a3b8;font-size:11px;margin-bottom:10px;">These must be closed before you can start your interview.</div>
+          <button style="background:#ef4444;color:#fff;border:none;border-radius:5px;padding:7px 16px;font-size:12px;cursor:pointer;width:100%;">Close All AI Tools</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Summary + single "Close All" button</h3>
+      <p>Lists the tool names in text, one big action button closes everything at once. Simpler UX — candidates don't need to know which one to close first.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0f0f11;border-radius:8px;padding:16px;font-family:system-ui,sans-serif;font-size:13px;color:#e5e7eb;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" fill="#ef444430" stroke="#ef4444" stroke-width="1.5"/><path d="M6 6l6 6M12 6l-6 6" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span style="color:#94a3b8;">Scanning processes</span>
+        </div>
+        <div style="background:#1e1e24;border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+              <span style="color:#e5e7eb;">Claude</span>
+              <span style="color:#6b7280;font-size:11px;">pid 12483</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button style="background:#1e3a2f;color:#4ade80;border:1px solid #4ade8030;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">Quit</button>
+              <button style="background:#2a1a1a;color:#f87171;border:1px solid #f8717130;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">Force Kill</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+              <span style="color:#e5e7eb;">Cursor</span>
+              <span style="color:#6b7280;font-size:11px;">pid 18821</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button style="background:#1e3a2f;color:#4ade80;border:1px solid #4ade8030;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">Quit</button>
+              <button style="background:#2a1a1a;color:#f87171;border:1px solid #f8717130;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">Force Kill</button>
+            </div>
+          </div>
+        </div>
+        <div style="color:#6b7280;font-size:10px;margin-top:8px;">Quit = graceful (saves data). Force Kill = immediate.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Per-tool Quit + Force Kill</h3>
+      <p>Two buttons per tool: graceful quit (SIGTERM, app saves its state) vs. force kill (SIGKILL, immediate). More power but more decisions for the candidate under stress.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+<h2>Implementation approaches</h2>
+<p class="subtitle">Three ways to wire up the kill-process capability</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Extend PreflightCheck + single kill command (Recommended)</h3>
+      <p>Add an optional <code>flagged_processes</code> field to the existing <code>PreflightCheck</code> struct. Add one new Tauri command <code>kill_process(pid, force)</code>. Frontend reads the processes out of the preflight result and renders the expanded row. Clean — no new API surface beyond one command.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Minimal changes to existing structs</li><li>All data flows through the existing preflight invoke</li><li>One command handles both graceful + force</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>PreflightCheck becomes slightly polymorphic</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Separate get_flagged_processes command</h3>
+      <p>Keep <code>run_preflight</code> unchanged (returns text only). Add a separate <code>get_flagged_processes()</code> command the frontend calls independently when the scan fails. Frontend fetches process list, renders the UI, calls <code>kill_process()</code>.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>No changes to existing PreflightCheck type</li><li>Decoupled — can call get_flagged_processes anytime</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Two round-trips to Rust on preflight fail</li><li>Race condition window between scan + fetch</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Replace details string with JSON payload</h3>
+      <p>Keep <code>details: String</code> in PreflightCheck but serialize structured data as JSON into it for the processes check. Frontend parses it if it looks like JSON, otherwise shows it as text. Backwards-compatible hack.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero struct changes</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Ugly — stringly-typed data</li><li>Easy to break</li><li>Not worth it</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

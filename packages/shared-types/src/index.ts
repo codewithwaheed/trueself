@@ -165,6 +165,8 @@ export interface AgentHeartbeat {
   networkFlags: NetworkFlag[];
   clipboardEvents: ClipboardEvent[];
   trustScore: number;            // 0-100 computed on server
+  lockdownActive?: boolean;
+  sessionElapsedSeconds?: number;
 }
 
 export interface ScreenInfo {
@@ -228,15 +230,18 @@ export interface TrustEvent {
 }
 
 // WebSocket message types
-export type WSMessageFromAgent = 
+export type WSMessageFromAgent =
   | { type: "heartbeat"; data: AgentHeartbeat }
   | { type: "alert"; data: TrustEvent }
-  | { type: "preflight_result"; data: PreflightResult };
+  | { type: "preflight_result"; data: PreflightResult }
+  | { type: "session_start"; sessionId: string; timestamp: string };
 
-export type WSMessageToAgent = 
+export type WSMessageToAgent =
   | { type: "session_start"; sessionId: string }
   | { type: "session_end" }
-  | { type: "config_update"; config: AgentConfig };
+  | { type: "config_update"; config: AgentConfig }
+  | { type: "lockdown_command"; action: "start" | "stop" }
+  | { type: "session_alert"; severity: "info" | "warning" | "critical"; message: string; timestamp: string };
 
 export interface PreflightResult {
   passed: boolean;
@@ -254,3 +259,49 @@ export interface AgentConfig {
   monitorClipboard: boolean;
   monitorNetwork: boolean;
 }
+
+// ---- Lockdown Types ----
+
+// Lockdown status returned from Tauri
+export interface LockdownStatus {
+  phase: "inactive" | "processes_suspended" | "dns_active" | "fully_locked" | "cleaning_up";
+  suspendedPids: number[];
+  dnsActive: boolean;
+  verificationResult?: "pending" | "blocked" | "failed";
+}
+
+// Agent session overlay data
+export interface SessionOverlayData {
+  sessionId: string;
+  startedAt: string; // ISO timestamp
+  elapsedSeconds: number;
+  lockdownActive: boolean;
+}
+
+// ---- Server → Dashboard WebSocket Types ----
+
+export interface TrustUpdate {
+  type: "trust_update";
+  sessionId: string;
+  score: number;
+  factors: {
+    aiProcessDetected: boolean;
+    suspiciousOverlay: boolean;
+    screenCountChanged: boolean;
+    clipboardAiContent: boolean;
+    agentDisconnected: boolean;
+  };
+  timestamp: string;
+}
+
+export interface AgentStatusUpdate {
+  type: "agent_status";
+  sessionId: string;
+  connected: boolean;
+  disconnectedSince?: string;
+}
+
+export type WSMessageToDashboard =
+  | TrustUpdate
+  | AgentStatusUpdate
+  | { type: "session_alert"; severity: string; message: string; timestamp: string };

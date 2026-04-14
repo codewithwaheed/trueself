@@ -7,6 +7,8 @@ import type { AgentHeartbeat, WSMessageFromAgent, TrustEvent } from "@trueself/s
 import { prisma } from "@trueself/db";
 import authRoutes from "./routes/auth";
 import sessionsRoutes from "./routes/sessions";
+import { recordHeartbeat, startWatchdog, onAgentReconnect } from "./ws/watchdog";
+import { computeTrustScore, heartbeatToFactors } from "./ws/trust-engine";
 
 const app = new Hono();
 
@@ -73,6 +75,9 @@ const wss = new WebSocketServer({ server });
 // Track connections: sessionId -> { agent: ws, dashboards: ws[] }
 const sessions = new Map<string, { agent?: WebSocket; dashboards: Set<WebSocket> }>();
 
+// Track which agents were previously connected (for reconnect detection)
+const agentEverConnected = new Set<string>();
+
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url || "", `http://${req.headers.host}`);
   const sessionId = url.searchParams.get("sessionId");
@@ -90,35 +95,74 @@ wss.on("connection", (ws, req) => {
   const session = sessions.get(sessionId)!;
 
   if (role === "agent") {
+    const wasConnected = agentEverConnected.has(sessionId);
     session.agent = ws;
-    // Notify dashboards that agent connected
-    session.dashboards.forEach((d) =>
-      d.send(JSON.stringify({ type: "agent_status", connected: true }))
-    );
+    agentEverConnected.add(sessionId);
+
+    if (wasConnected) {
+      // Reconnect: clear watchdog disconnect state and notify dashboards
+      onAgentReconnect(sessionId, () => sessions);
+    } else {
+      // First connection
+      recordHeartbeat(sessionId);
+      session.dashboards.forEach((d) =>
+        d.send(JSON.stringify({ type: "agent_status", sessionId, connected: true }))
+      );
+    }
   } else {
     session.dashboards.add(ws);
   }
 
   ws.on("message", async (raw) => {
-    const msg: WSMessageFromAgent = JSON.parse(raw.toString());
+    let msg: WSMessageFromAgent;
+    try {
+      msg = JSON.parse(raw.toString()) as WSMessageFromAgent;
+    } catch {
+      return;
+    }
 
     if (role === "agent") {
-      // Forward agent data to all dashboard viewers
+      // Forward raw agent data to dashboards (backwards compat)
       session.dashboards.forEach((d) => {
         if (d.readyState === WebSocket.OPEN) {
           d.send(raw.toString());
         }
       });
 
+      if (msg.type === "heartbeat") {
+        const heartbeat = msg.data as AgentHeartbeat;
+
+        // Record heartbeat time for watchdog
+        recordHeartbeat(sessionId);
+
+        // Compute trust score and broadcast trust_update to dashboards
+        const factors = heartbeatToFactors(heartbeat, false);
+        const score = computeTrustScore(factors);
+        const trustUpdate = {
+          type: "trust_update",
+          sessionId,
+          score,
+          factors,
+          timestamp: new Date().toISOString(),
+        };
+        const trustPayload = JSON.stringify(trustUpdate);
+        session.dashboards.forEach((d) => {
+          if (d.readyState === WebSocket.OPEN) {
+            d.send(trustPayload);
+          }
+        });
+      }
+
       // Persist critical events to DB
       if (msg.type === "alert") {
+        const event = msg.data as TrustEvent;
         await prisma.trustEvent.create({
           data: {
             sessionId,
-            type: msg.data.type,
-            severity: msg.data.severity,
-            message: msg.data.message,
-            timestamp: new Date(msg.data.timestamp),
+            type: event.type,
+            severity: event.severity,
+            message: event.message,
+            timestamp: new Date(event.timestamp),
           },
         });
       }
@@ -128,14 +172,16 @@ wss.on("connection", (ws, req) => {
   ws.on("close", () => {
     if (role === "agent") {
       session.agent = undefined;
-      session.dashboards.forEach((d) =>
-        d.send(JSON.stringify({ type: "agent_status", connected: false }))
-      );
+      // Don't immediately broadcast disconnect — watchdog handles the 10s gap check
+      // and will send agent_status { connected: false } after the gap threshold.
     } else {
       session.dashboards.delete(ws);
     }
   });
 });
+
+// Start heartbeat watchdog — checks every 5 seconds for stale agents
+startWatchdog(() => sessions);
 
 // Mount Hono on the HTTP server
 server.on("request", (req, res) => {

@@ -414,13 +414,27 @@ button:disabled {
 
 .process-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
   background: rgba(239, 68, 68, 0.06);
   border: 1px solid rgba(239, 68, 68, 0.18);
   border-radius: 6px;
   transition: opacity 0.2s;
+}
+
+.process-row-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.process-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 14px;
 }
 
 .process-row.closed {
@@ -445,24 +459,29 @@ button:disabled {
   font-size: 12px;
   font-weight: 500;
   color: var(--text);
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.process-parent {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
 .process-pid {
   font-size: 11px;
   color: var(--text-muted);
   font-family: "SF Mono", "Fira Code", monospace;
-  flex-shrink: 0;
 }
 
 .process-actions {
   display: flex;
   gap: 5px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding-left: 14px;
 }
 
 .process-row-error {
@@ -532,4 +551,357 @@ button:disabled {
 .btn-quit-all:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ---- Respawn badge ---- */
+
+.badge-respawning {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  flex-shrink: 0;
+}
+
+/* ---- Suspended process row ---- */
+
+.process-row.process-suspended {
+  opacity: 0.65;
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.process-row.process-suspended .process-dot {
+  background: var(--warning);
+}
+
+.badge-suspended {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ---- Lockdown section ---- */
+
+.lockdown-section {
+  margin-top: 16px;
+  margin-bottom: 4px;
+  padding: 14px 16px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius);
+}
+
+.lockdown-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.lockdown-icon {
+  font-size: 14px;
+}
+
+.lockdown-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.btn-lockdown {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.15s;
+  font-family: var(--font);
+}
+
+.btn-lockdown:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btn-lockdown:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lockdown-status {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lockdown-status-success {
+  color: var(--success);
+}
+
+.lockdown-status-warn {
+  color: var(--warning);
+}
+
+.lockdown-status-error {
+  color: var(--error);
+}
+
+.lockdown-check {
+  font-size: 13px;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.lockdown-warn {
+  font-size: 13px;
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.lockdown-error {
+  font-size: 13px;
+  color: var(--error);
+  font-weight: 700;
+}
+
+/* ---- Screen 3: Session Overlay ---- */
+
+#screen-ready {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: 28px;
+  gap: 16px;
+}
+
+.session-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.session-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.session-status-badge.active {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.session-status-badge.reconnecting {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.status-dot-active {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 5px var(--success);
+  flex-shrink: 0;
+}
+
+.status-dot-reconnecting {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 5px var(--warning);
+  flex-shrink: 0;
+}
+
+.session-timer {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: var(--text);
+}
+
+/* ---- Lockdown indicator (overlay) ---- */
+
+.lockdown-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.lock-icon {
+  font-size: 14px;
+}
+
+/* ---- Event Log ---- */
+
+.event-log {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.event-log-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+#event-log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-entry {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12px;
+}
+
+.event-entry-critical {
+  border-left-color: var(--error);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.event-entry-warning {
+  border-left-color: var(--warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.event-entry-info {
+  border-left-color: var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.event-time {
+  color: var(--text-muted);
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.event-message {
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- End Interview button ---- */
+
+.btn-danger {
+  width: 100%;
+  background: transparent;
+  color: var(--error);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* ---- Interview Ended screen ---- */
+
+.interview-ended {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.ended-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1.5px solid rgba(34, 197, 94, 0.3);
+  color: var(--success);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.ended-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ended-detail {
+  font-size: 13px;
+  color: var(--text-muted);
 }

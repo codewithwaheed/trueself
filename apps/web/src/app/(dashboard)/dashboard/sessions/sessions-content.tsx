@@ -123,6 +123,17 @@ function SessionRow({
           </button>
         )}
 
+        {session.status === "active" && (
+          <a
+            href={`/dashboard/sessions/${session.id}/live`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-xs font-medium text-trust hover:text-trust/80 transition-colors whitespace-nowrap px-2 py-1 rounded-md bg-trust/10 border border-trust/20 hover:bg-trust/15"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-trust animate-pulse flex-shrink-0" />
+            View Live
+          </a>
+        )}
+
         {/* Right arrow affordance */}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-navy-600 shrink-0">
           <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />

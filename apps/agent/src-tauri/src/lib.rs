@@ -2,6 +2,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 mod monitors;
+mod lockdown;
 
 // ---- App State ----
 
@@ -9,6 +10,8 @@ pub struct AppState {
     pub session_id: Mutex<Option<String>>,
     pub heartbeat_task: Mutex<Option<tokio::task::JoinHandle<()>>>,
     pub ws_connected: Mutex<bool>,
+    pub lockdown: Mutex<lockdown::LockdownState>,
+    pub interview_started_at: Mutex<Option<u64>>, // unix millis
 }
 
 impl Default for AppState {
@@ -17,6 +20,8 @@ impl Default for AppState {
             session_id: Mutex::new(None),
             heartbeat_task: Mutex::new(None),
             ws_connected: Mutex::new(false),
+            lockdown: Mutex::new(lockdown::LockdownState::default()),
+            interview_started_at: Mutex::new(None),
         }
     }
 }
@@ -47,6 +52,20 @@ pub struct AgentSessionInfo {
     pub status: String,
     #[serde(rename = "meetingLink")]
     pub meeting_link: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct LockdownVerification {
+    pub dns_active: bool,
+    pub processes_suspended: bool,
+    pub verified_domains: Vec<DomainCheck>,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct DomainCheck {
+    pub domain: String,
+    pub resolved_to: String,
+    pub blocked: bool,
 }
 
 // ---- Tauri Commands ----
@@ -127,15 +146,7 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
     });
 
     // 3. Process scan — flag known AI tools
-    let processes = monitors::processes::scan_processes();
-    let flagged: Vec<monitors::processes::FlaggedProcess> = processes
-        .iter()
-        .filter(|p| p.is_flagged)
-        .map(|p| monitors::processes::FlaggedProcess {
-            pid: p.pid,
-            name: p.name.clone(),
-        })
-        .collect();
+    let flagged = monitors::processes::scan_flagged_with_parents();
     checks.push(PreflightCheck {
         name: "Scanning processes".to_string(),
         passed: flagged.is_empty(),
@@ -155,7 +166,7 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
         flagged_processes: if flagged.is_empty() { None } else { Some(flagged) },
     });
 
-    // 4. Permissions — if we scanned processes, we have the access we need
+    // 4. Permissions
     checks.push(PreflightCheck {
         name: "Verifying permissions".to_string(),
         passed: true,
@@ -173,7 +184,6 @@ async fn start_monitoring(
     app: AppHandle,
     session_id: String,
 ) -> Result<(), String> {
-    // Abort any previous heartbeat task
     let old = state.heartbeat_task.lock().unwrap().take();
     if let Some(handle) = old {
         handle.abort();
@@ -181,6 +191,13 @@ async fn start_monitoring(
 
     *state.session_id.lock().unwrap() = Some(session_id.clone());
     *state.ws_connected.lock().unwrap() = false;
+
+    // Record interview start time
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+    *state.interview_started_at.lock().unwrap() = Some(now);
 
     let app_clone = app.clone();
     let sid = session_id.clone();
@@ -192,7 +209,7 @@ async fn start_monitoring(
     Ok(())
 }
 
-/// Stop background monitoring (called when window/session ends).
+/// Stop background monitoring.
 #[tauri::command]
 fn stop_monitoring(state: State<'_, AppState>) {
     let handle = state.heartbeat_task.lock().unwrap().take();
@@ -200,6 +217,7 @@ fn stop_monitoring(state: State<'_, AppState>) {
         h.abort();
     }
     *state.ws_connected.lock().unwrap() = false;
+    *state.interview_started_at.lock().unwrap() = None;
 }
 
 #[tauri::command]
@@ -207,7 +225,7 @@ fn get_ws_connected(state: State<'_, AppState>) -> bool {
     *state.ws_connected.lock().unwrap()
 }
 
-/// Kill a process by PID. force=false sends SIGTERM (graceful), force=true sends SIGKILL.
+/// Kill a process by PID. force=false sends SIGTERM, force=true sends SIGKILL.
 #[tauri::command]
 fn kill_process(pid: u32, force: bool) -> Result<(), String> {
     use sysinfo::{Pid, Signal, System};
@@ -233,6 +251,116 @@ fn kill_process(pid: u32, force: bool) -> Result<(), String> {
     }
 }
 
+/// Suspend the given PIDs and optionally start the DNS sinkhole.
+/// Returns a `LockdownResult` with what was actually activated.
+#[tauri::command]
+async fn start_lockdown(
+    state: State<'_, AppState>,
+    ai_pids: Vec<u32>,
+) -> Result<serde_json::Value, String> {
+    // Take the LockdownState out of AppState so we can .await without holding the Mutex.
+    let mut current = {
+        let mut guard = state.lockdown.lock().unwrap();
+        std::mem::take(&mut *guard)
+    };
+
+    let lockdown_result = current.start(&ai_pids).await;
+
+    {
+        let mut guard = state.lockdown.lock().unwrap();
+        *guard = current;
+    }
+
+    Ok(serde_json::json!({
+        "phase": lockdown_result.phase,
+        "suspendedPids": lockdown_result.suspended_pids,
+        "dnsActive": lockdown_result.dns_active,
+        "dnsError": lockdown_result.dns_error,
+    }))
+}
+
+/// Resume all suspended processes and restore DNS.
+#[tauri::command]
+async fn stop_lockdown(state: State<'_, AppState>) -> Result<(), String> {
+    let mut current = {
+        let mut guard = state.lockdown.lock().unwrap();
+        std::mem::take(&mut *guard)
+    };
+
+    current.stop().await;
+
+    {
+        let mut guard = state.lockdown.lock().unwrap();
+        *guard = current;
+    }
+
+    Ok(())
+}
+
+/// Verify the lockdown by doing DNS lookups on sinkholed domains.
+#[tauri::command]
+async fn verify_lockdown(state: State<'_, AppState>) -> Result<LockdownVerification, String> {
+    use hickory_resolver::TokioAsyncResolver;
+    use hickory_resolver::config::{ResolverConfig, ResolverOpts};
+
+    let (dns_active, processes_suspended) = {
+        let ld = state.lockdown.lock().unwrap();
+        (ld.dns_active(), !ld.suspended_pids().is_empty())
+    };
+
+    // Verify by resolving a few sinkholed domains
+    let test_domains = ["api.openai.com", "claude.ai", "cursor.sh"];
+    let mut verified_domains = Vec::new();
+
+    // Use system DNS (which should now point to our sinkhole)
+    let resolver = TokioAsyncResolver::tokio(
+        ResolverConfig::default(),
+        ResolverOpts::default(),
+    );
+
+    for domain in &test_domains {
+        let (resolved_to, blocked) = match resolver.lookup_ip(*domain).await {
+            Ok(lookup) => {
+                let first_ip = lookup.iter().next().map(|ip| ip.to_string()).unwrap_or_default();
+                let is_blocked = first_ip == "127.0.0.1";
+                (first_ip, is_blocked)
+            }
+            Err(_) => {
+                // Resolution failure could also indicate blocking (NXDOMAIN/SERVFAIL)
+                ("resolution failed".to_string(), false)
+            }
+        };
+        verified_domains.push(DomainCheck {
+            domain: domain.to_string(),
+            resolved_to,
+            blocked,
+        });
+    }
+
+    Ok(LockdownVerification {
+        dns_active,
+        processes_suspended,
+        verified_domains,
+    })
+}
+
+/// Suspend specific PIDs without starting DNS — used for the per-process "Suspend" button.
+#[tauri::command]
+async fn suspend_processes(
+    state: State<'_, AppState>,
+    pids: Vec<u32>,
+) -> Result<Vec<u32>, String> {
+    let mut guard = state.lockdown.lock().unwrap();
+    guard.suspended.suspend_all(&pids)
+}
+
+/// Resume all suspended processes (without touching DNS).
+#[tauri::command]
+async fn resume_processes(state: State<'_, AppState>) -> Result<(), String> {
+    let mut guard = state.lockdown.lock().unwrap();
+    guard.suspended.resume_all()
+}
+
 // ---- Heartbeat Loop ----
 
 async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
@@ -244,10 +372,26 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
         session_id
     );
 
+    // Send session_start_confirmed once connected
+    let mut session_start_sent = false;
+
     loop {
         match connect_async(&ws_url).await {
             Ok((mut ws_stream, _)) => {
                 set_ws_status(&app, true);
+
+                // Send session_start_confirmed on first connection
+                if !session_start_sent {
+                    let confirm_msg = serde_json::json!({
+                        "type": "session_start_confirmed"
+                    });
+                    let _ = ws_stream
+                        .send(Message::Text(
+                            serde_json::to_string(&confirm_msg).unwrap_or_default().into(),
+                        ))
+                        .await;
+                    session_start_sent = true;
+                }
 
                 let mut interval =
                     tokio::time::interval(tokio::time::Duration::from_millis(3000));
@@ -264,7 +408,7 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
                                 serde_json::to_string(&payload).unwrap_or_default().into()
                             );
                             if ws_stream.send(msg).await.is_err() {
-                                break; // connection lost — fall through to reconnect
+                                break;
                             }
                         }
                         incoming = ws_stream.next() => {
@@ -275,7 +419,7 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
                                     {
                                         if v["type"] == "session_end" {
                                             let _ = app.emit("session_ended", ());
-                                            return; // session is over — stop loop
+                                            return;
                                         }
                                     }
                                 }
@@ -294,7 +438,6 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
             }
         }
 
-        // Wait before retrying
         tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
     }
 }
@@ -302,7 +445,6 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
 fn set_ws_status(app: &AppHandle, connected: bool) {
     let _ = app.emit("ws_status", serde_json::json!({ "connected": connected }));
 
-    // Update tray tooltip to reflect status
     if let Some(tray) = app.tray_by_id("main-tray") {
         let tooltip = if connected {
             "TrueSelf — Connected"
@@ -327,6 +469,17 @@ fn build_heartbeat(app: &AppHandle, session_id: &str) -> serde_json::Value {
 
     let clipboard_events: Vec<_> = clipboard_event.into_iter().collect();
 
+    // Get lockdown state from app state
+    let app_state = app.state::<AppState>();
+    let (lockdown_active, suspended_pids) = {
+        let ld = app_state.lockdown.lock().unwrap();
+        (ld.is_active(), ld.suspended_pids())
+    };
+    let interview_started_at = *app_state.interview_started_at.lock().unwrap();
+    let interview_duration_ms = interview_started_at
+        .map(|start| timestamp.saturating_sub(start))
+        .unwrap_or(0);
+
     serde_json::json!({
         "sessionId": session_id,
         "timestamp": timestamp,
@@ -335,7 +488,10 @@ fn build_heartbeat(app: &AppHandle, session_id: &str) -> serde_json::Value {
         "suspiciousWindows": windows,
         "networkFlags": network_flags,
         "clipboardEvents": clipboard_events,
-        "trustScore": 100
+        "trustScore": 100,
+        "lockdownActive": lockdown_active,
+        "suspendedPids": suspended_pids,
+        "interviewDurationMs": interview_duration_ms,
     })
 }
 
@@ -347,6 +503,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
         .setup(|app| {
+            // Stale lockdown recovery: if DNS was left pointing to sinkhole from a crash,
+            // restore it now before the user does anything.
+            if lockdown::dns_sinkhole::DnsSinkhole::is_dns_redirected() {
+                eprintln!("[startup] stale DNS lockdown detected — restoring...");
+                lockdown::dns_sinkhole::DnsSinkhole::recover_from_backup();
+            }
+
             use tauri::menu::{MenuBuilder, MenuItem};
             use tauri::tray::TrayIconBuilder;
 
@@ -377,6 +540,35 @@ pub fn run() {
                                 let _ = app.emit("rerun_preflight", ());
                             }
                         }
+                        "end_interview" => {
+                            let app_clone = app.clone();
+                            tauri::async_runtime::spawn(async move {
+                                let state = app_clone.state::<AppState>();
+                                // Stop lockdown
+                                let mut current = {
+                                    let mut guard = state.lockdown.lock().unwrap();
+                                    std::mem::take(&mut *guard)
+                                };
+                                current.stop().await;
+                                {
+                                    let mut guard = state.lockdown.lock().unwrap();
+                                    *guard = current;
+                                }
+                                // Stop monitoring
+                                let handle = state.heartbeat_task.lock().unwrap().take();
+                                if let Some(h) = handle {
+                                    h.abort();
+                                }
+                                *state.ws_connected.lock().unwrap() = false;
+                                *state.interview_started_at.lock().unwrap() = None;
+
+                                let _ = app_clone.emit("interview_ended_by_tray", ());
+                                if let Some(win) = app_clone.get_webview_window("main") {
+                                    let _ = win.show();
+                                    let _ = win.set_focus();
+                                }
+                            });
+                        }
                         _ => {}
                     }
                 })
@@ -406,6 +598,11 @@ pub fn run() {
             stop_monitoring,
             get_ws_connected,
             kill_process,
+            start_lockdown,
+            stop_lockdown,
+            verify_lockdown,
+            suspend_processes,
+            resume_processes,
         ])
         .run(tauri::generate_context!())
         .expect("error while running TrueSelf agent");
