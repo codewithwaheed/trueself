@@ -695,20 +695,66 @@ function addEventLogEntry(severity: string, message: string, timestamp: string) 
 }
 
 function initReadyScreen() {
-  const endBtn = document.getElementById("end-interview-btn");
-  if (endBtn) {
-    endBtn.addEventListener("click", async () => {
-      const confirmed = window.confirm("End the interview session?");
-      if (!confirmed) return;
+  const endBtn = document.getElementById("end-interview-btn") as HTMLButtonElement | null;
+  if (!endBtn) return;
+
+  endBtn.addEventListener("click", async () => {
+    // Replace button with inline confirmation — avoids window.confirm which
+    // returns false silently in Tauri 2 WKWebView.
+    if (endBtn.dataset.confirming === "true") return; // guard against double-click
+    endBtn.dataset.confirming = "true";
+    endBtn.textContent = "End interview?";
+    endBtn.disabled = true;
+
+    const confirmRow = document.createElement("div");
+    confirmRow.style.cssText = "display:flex;gap:8px;justify-content:center;margin-top:8px;";
+
+    const confirmYes = document.createElement("button");
+    confirmYes.className = "btn-danger";
+    confirmYes.style.cssText = "flex:1;max-width:140px;";
+    confirmYes.textContent = "Yes, end it";
+
+    const confirmNo = document.createElement("button");
+    confirmNo.className = "btn-ghost";
+    confirmNo.style.cssText = "flex:1;max-width:100px;";
+    confirmNo.textContent = "Cancel";
+
+    confirmRow.appendChild(confirmYes);
+    confirmRow.appendChild(confirmNo);
+    endBtn.insertAdjacentElement("afterend", confirmRow);
+
+    confirmNo.addEventListener("click", () => {
+      confirmRow.remove();
+      endBtn.textContent = "End Interview";
+      endBtn.disabled = false;
+      delete endBtn.dataset.confirming;
+    });
+
+    confirmYes.addEventListener("click", async () => {
+      confirmRow.remove();
+      endBtn.textContent = "Ending...";
+
+      // Capture session ID before stop_monitoring could clear AppState
+      const sid = currentSession?.id ?? null;
 
       try {
-        await invoke("stop_monitoring");
+        // 1. Restore DNS + resume suspended processes (must be first)
         if (lockdownActive) {
           await invoke("stop_lockdown");
           lockdownActive = false;
         }
+
+        // 2. Stop heartbeat loop
+        await invoke("stop_monitoring");
+
+        // 3. Notify server — best-effort, non-blocking
+        if (sid) {
+          await invoke("notify_session_ended").catch((e: unknown) => {
+            console.warn("notify_session_ended failed (non-fatal):", e);
+          });
+        }
       } catch (err) {
-        console.error("Error ending interview:", err);
+        console.error("Error during end interview cleanup:", err);
       }
 
       stopRespawnWatcher();
@@ -717,10 +763,9 @@ function initReadyScreen() {
         timerInterval = null;
       }
 
-      // Show ended state
       showInterviewEndedScreen();
     });
-  }
+  });
 }
 
 function showInterviewEndedScreen() {
