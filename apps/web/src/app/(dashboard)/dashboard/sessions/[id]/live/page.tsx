@@ -13,7 +13,13 @@ interface SessionAlert {
   timestamp: string;
 }
 
-type LiveMessage = TrustUpdate | AgentStatusUpdate | SessionAlert;
+interface SessionStatusUpdate {
+  type: 'session_status_update';
+  status: string;
+  endedAt?: string;
+}
+
+type LiveMessage = TrustUpdate | AgentStatusUpdate | SessionAlert | SessionStatusUpdate;
 
 interface TrustFactorDisplayItem {
   key: keyof TrustUpdate['factors'];
@@ -256,6 +262,7 @@ export default function LiveSessionPage() {
   const [agentConnected, setAgentConnected] = useState(true);
   const [events, setEvents] = useState<SessionAlert[]>([]);
   const [criticalBanner, setCriticalBanner] = useState<string | null>(null);
+  const [sessionEnded, setSessionEnded] = useState<{ endedAt: string } | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -297,6 +304,11 @@ export default function LiveSessionPage() {
           setCriticalBanner(alert.message);
           const ctx = getOrCreateAudioCtx();
           if (ctx) playAlert(ctx);
+        }
+      } else if (msg.type === 'session_status_update') {
+        const update = msg as SessionStatusUpdate;
+        if (update.status === 'completed') {
+          setSessionEnded({ endedAt: update.endedAt ?? new Date().toISOString() });
         }
       }
     },
@@ -358,6 +370,35 @@ export default function LiveSessionPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-sm text-[var(--text-muted)]">Session ID missing.</p>
+      </div>
+    );
+  }
+
+  if (sessionEnded) {
+    const endTime = new Date(sessionEnded.endedAt).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+          <svg className="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight mb-1">Session Ended</h1>
+          <p className="text-sm text-[var(--text-muted)]">Completed at {endTime}</p>
+        </div>
+        <button
+          onClick={() => router.push('/dashboard/sessions')}
+          className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-4 py-2 rounded-lg border border-[var(--border-subtle)] hover:border-[var(--border-default)]"
+        >
+          Back to Sessions
+        </button>
       </div>
     );
   }
