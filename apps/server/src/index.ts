@@ -64,6 +64,42 @@ app.get("/api/sessions/:id", async (c) => {
   return c.json(session);
 });
 
+// POST /api/sessions/:id/agent-end — unauthenticated, called by the desktop agent
+// The agent proves identity by knowing the session ID (set during verify_session_code).
+// Must be registered BEFORE the authenticated sessionsRoutes to avoid auth middleware.
+app.post("/api/sessions/:id/agent-end", async (c) => {
+  const sessionId = c.req.param("id");
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session) {
+    return c.json({ error: "Session not found" }, 404);
+  }
+
+  if (session.status !== "ACTIVE") {
+    return c.json({ ok: true, already: session.status.toLowerCase() });
+  }
+
+  const endedAt = new Date();
+  await prisma.interviewSession.update({
+    where: { id: sessionId },
+    data: { status: "COMPLETED", endedAt },
+  });
+
+  sendToAgent(sessionId, { type: "session_end" });
+
+  broadcastToDashboards(sessionId, {
+    type: "session_status_update",
+    sessionId,
+    status: "completed",
+    endedAt: endedAt.toISOString(),
+  });
+
+  return c.json({ ok: true });
+});
+
 // ---- Sessions Routes (authenticated) ----
 app.route("/api/sessions", sessionsRoutes);
 
