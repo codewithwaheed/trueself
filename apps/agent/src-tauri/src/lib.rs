@@ -257,6 +257,28 @@ fn stop_monitoring(state: State<'_, AppState>) {
     *state.interview_started_at.lock().unwrap() = None;
 }
 
+/// Notify the server that the agent is ending the interview session.
+/// Best-effort: errors are logged but not propagated — local cleanup must succeed
+/// regardless of server reachability.
+#[tauri::command]
+async fn notify_session_ended(state: State<'_, AppState>) -> Result<(), String> {
+    let sid = state.session_id.lock().unwrap().clone();
+    if let Some(id) = sid {
+        let url = format!("http://localhost:3001/api/sessions/{}/agent-end", id);
+        match reqwest::Client::new().post(&url).send().await {
+            Ok(resp) => {
+                if !resp.status().is_success() {
+                    eprintln!("[agent] agent-end notify got status: {}", resp.status());
+                }
+            }
+            Err(e) => {
+                eprintln!("[agent] agent-end notify failed: {}", e);
+            }
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn get_ws_connected(state: State<'_, AppState>) -> bool {
     *state.ws_connected.lock().unwrap()
@@ -677,6 +699,7 @@ pub fn run() {
             verify_lockdown,
             suspend_processes,
             resume_processes,
+            notify_session_ended,
         ])
         .run(tauri::generate_context!())
         .expect("error while running TrueSelf agent");
