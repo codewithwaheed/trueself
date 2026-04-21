@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { NewSessionModal } from "@/components/new-session-modal";
 import { SessionDetailDrawer } from "@/components/session-detail-drawer";
@@ -176,6 +176,19 @@ export function SessionsContent({
       }
     },
   });
+
+  // Poll every 30s while any session is pending, to detect candidate joining.
+  // The WS-based path only covers sessions open in the drawer; polling covers the rest.
+  useEffect(() => {
+    const hasPending = initialSessions.some((s) => s.status === "pending");
+    if (!hasPending) return;
+
+    const id = setInterval(() => {
+      router.refresh();
+    }, 30_000);
+
+    return () => clearInterval(id);
+  }, [initialSessions, router]);
 
   const tabs: TabKey[] = ["upcoming", "active", "completed"];
 
