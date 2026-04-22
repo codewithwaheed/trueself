@@ -298,31 +298,39 @@ wss.on("connection", async (ws, req) => {
       // Persist critical events to DB
       if (msg.type === "alert") {
         const event = msg.data as TrustEvent;
-        await prisma.trustEvent.create({
-          data: {
-            sessionId,
-            type: event.type,
-            severity: event.severity,
-            message: event.message,
-            timestamp: new Date(event.timestamp),
-          },
-        });
+        try {
+          await prisma.trustEvent.create({
+            data: {
+              sessionId,
+              type: event.type,
+              severity: event.severity,
+              message: event.message,
+              timestamp: new Date(event.timestamp),
+            },
+          });
+        } catch (err) {
+          console.error(`[ws] failed to persist trust event for session ${sessionId}:`, err);
+        }
       }
 
       // Persist user events from heartbeat (Task 7C)
       if (msg.type === "heartbeat") {
         const events: UserEvent[] = (msg.data as { userEvents?: UserEvent[] }).userEvents ?? [];
         if (events.length > 0) {
-          await prisma.sessionEvent.createMany({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            data: events.map((e) => ({
-              sessionId,
-              timestamp: new Date(e.timestamp),
-              type: e.type as string,
-              metadata: (e.metadata ?? null) as Prisma.InputJsonValue | null,
-            })) as any,
-            skipDuplicates: true,
-          });
+          try {
+            await prisma.sessionEvent.createMany({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              data: events.map((e) => ({
+                sessionId,
+                timestamp: new Date(e.timestamp),
+                type: e.type as string,
+                metadata: (e.metadata ?? null) as Prisma.InputJsonValue | null,
+              })) as any,
+              skipDuplicates: true,
+            });
+          } catch (err) {
+            console.error(`[ws] failed to persist session events for session ${sessionId}:`, err);
+          }
         }
       }
     }

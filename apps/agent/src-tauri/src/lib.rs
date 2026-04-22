@@ -76,7 +76,7 @@ pub struct DomainCheck {
 /// Verify a 6-digit session code against the server. Runs from Rust to avoid CORS.
 #[tauri::command]
 async fn verify_session_code(code: String) -> Result<AgentSessionInfo, String> {
-    let url = format!("http://localhost:3001/api/sessions/code/{}", code);
+    let url = format!("http://127.0.0.1:3001/api/sessions/code/{}", code);
     let res = reqwest::get(&url).await.map_err(|e| {
         format!("Cannot connect to server: {}", e)
     })?;
@@ -113,7 +113,7 @@ async fn run_preflight(app: AppHandle) -> Result<Vec<PreflightCheck>, String> {
     let mut checks = Vec::new();
 
     // 1. Server connectivity
-    let server_ok = reqwest::get("http://localhost:3001/health")
+    let server_ok = reqwest::get("http://127.0.0.1:3001/health")
         .await
         .map(|r| r.status().is_success())
         .unwrap_or(false);
@@ -264,7 +264,7 @@ fn stop_monitoring(state: State<'_, AppState>) {
 async fn notify_session_ended(state: State<'_, AppState>) -> Result<(), String> {
     let sid = state.session_id.lock().unwrap().clone();
     if let Some(id) = sid {
-        let url = format!("http://localhost:3001/api/sessions/{}/agent-end", id);
+        let url = format!("http://127.0.0.1:3001/api/sessions/{}/agent-end", id);
         match reqwest::Client::new().post(&url).send().await {
             Ok(resp) => {
                 if !resp.status().is_success() {
@@ -427,7 +427,7 @@ async fn run_heartbeat_loop(app: AppHandle, session_id: String) {
     use tokio_tungstenite::{connect_async, tungstenite::Message};
 
     let ws_url = format!(
-        "ws://localhost:3001?sessionId={}&role=agent",
+        "ws://127.0.0.1:3001/?sessionId={}&role=agent",
         session_id
     );
 
